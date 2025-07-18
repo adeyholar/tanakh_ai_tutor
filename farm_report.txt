@@ -1,0 +1,5 @@
+Crop: Corn
+Acres: 150
+Plant Date: 2025-03-15
+Expected Harvest: 2025-09-30
+Notes: Good soil conditions
