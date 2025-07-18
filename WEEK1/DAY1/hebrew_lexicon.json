@@ -1,0 +1,42 @@
+{
+  "שָׁלוֹם": {
+    "english": "peace/hello",
+    "root": "שלם",
+    "meaning": "complete/whole"
+  },
+  "אֱלֹהִים": {
+    "english": "God",
+    "root": "אלה",
+    "meaning": "God/gods"
+  },
+  "תּוֹרָה": {
+    "english": "Torah/Law",
+    "root": "ירה",
+    "meaning": "to teach/instruct"
+  },
+  "אוֹר": {
+    "english": "light",
+    "root": "אור",
+    "meaning": "to give light"
+  },
+  "מַיִם": {
+    "english": "water",
+    "root": "מים",
+    "meaning": "water"
+  },
+  "רוּחַ": {
+    "english": "spirit/wind",
+    "root": "רוח",
+    "meaning": "breath/wind"
+  },
+  "יוֹם": {
+    "english": "day",
+    "root": "יום",
+    "meaning": "day/time"
+  },
+  "אֶרֶץ": {
+    "english": "earth/land",
+    "root": "ארץ",
+    "meaning": "earth/land"
+  }
+}
