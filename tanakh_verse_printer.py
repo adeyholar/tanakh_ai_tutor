@@ -1,6 +1,7 @@
 # Super simple Python script for novices to print Biblical Hebrew Tanakh verses
 # Starting point for your Biblical Hebrew Tanakh Agentic AI Tutor
 # Note: Hebrew is right-to-left; \u202B ensures RTL display
+# Future capstone: Add read-along, repeat-after, feedback, BDB lookup, root/suffix toggles
 
 # Verse from Genesis 1:1 (Biblical Hebrew with nikkud)
 verse1 = "\u202Bבְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ"
