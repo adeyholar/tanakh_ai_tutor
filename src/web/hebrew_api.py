@@ -189,7 +189,7 @@ async def analyze_word_api(request: WordAnalysisRequest):
             vocab_entry = VocabularyEntry(
                 word_id=f"{request.user_id}_{request.word}_{int(datetime.now().timestamp())}",
                 user_id=request.user_id,
-                hebrew_word=request.word,
+                hebrew_word=result.translation, # Assuming translation is the English word here for vocab
                 translation=result.translation,
                 root=result.grammar_info.get('hebrew_root', 'unknown'),
                 part_of_speech=result.grammar_info.get('word_type', 'unknown'),
@@ -320,29 +320,189 @@ async def analyze_word_form(request: Request, hebrew_word: str = Form(...), user
             "analyzed_word": hebrew_word
         })
 
-@app.post("/study-verse-form")
-async def study_verse_form(request: Request, book: str = Form(...), chapter: int = Form(...), 
-                          verse: int = Form(...), user_id: str = Form("demo_user")):
-    """Handle verse study form submission"""
+# Frontend Template Fix - Update your hebrew_api.py study_verse_form_handler
+@app.post("/study-verse-form", response_class=HTMLResponse)
+async def study_verse_form_handler(
+    request: Request,
+    book: str = Form(...),
+    chapter: int = Form(...),
+    verse: int = Form(...)
+):
+    """
+    Handle verse study form submission and return results
+    """
+    logger = logging.getLogger(__name__)
+    
     try:
-        # Use the API endpoint
-        study_request = VerseStudyRequest(book=book, chapter=chapter, verse=verse, user_id=user_id)
-        result = await study_verse_api(study_request)
+        logger.info(f"📖 Processing verse study request: {book} {chapter}:{verse}")
         
-        return templates.TemplateResponse("study.html", {
+        # Study the verse using your existing session
+        verse_study_result = await tanakh_session.study_verse(book, chapter, verse)
+        
+        logger.info(f"✅ Verse study completed for {book} {chapter}:{verse}")
+        
+        # Get hebrew_text and handle both string and array formats
+        hebrew_text_raw = getattr(verse_study_result, 'hebrew_text', [])
+        
+        # Convert array to string for display
+        if isinstance(hebrew_text_raw, list):
+            hebrew_text_display = " ".join(hebrew_text_raw)
+        else:
+            hebrew_text_display = str(hebrew_text_raw)
+        
+        # Get analysis results
+        analysis_results = getattr(verse_study_result, 'analysis_results', [])
+        
+        # Prepare template data with proper structure
+        template_data = {
             "request": request,
-            "title": "Biblical Hebrew Study",
-            "study_result": result,
-            "verse_reference": f"{book} {chapter}:{verse}"
-        })
+            "verse_data": {
+                "book": book,
+                "chapter": chapter,
+                "verse": verse,
+                "hebrew_text": hebrew_text_display,  # Now a proper string
+                "words_analyzed": len(analysis_results),
+                "analysis_results": analysis_results,
+                "study_successful": True
+            }
+        }
+        
+        # Debug logging
+        logger.info(f"📊 Template data prepared:")
+        logger.info(f"   - Hebrew text: {hebrew_text_display}")
+        logger.info(f"   - Words analyzed: {len(analysis_results)}")
+        logger.info(f"   - Analysis results: {len(analysis_results)} items")
+        
+        return templates.TemplateResponse("study.html", template_data)
         
     except Exception as e:
-        return templates.TemplateResponse("study.html", {
+        logger.error(f"❌ Error in verse study: {str(e)}")
+        
+        # Return error template
+        error_data = {
             "request": request,
-            "title": "Biblical Hebrew Study",
+            "verse_data": None,
+            "error_message": f"Error studying {book} {chapter}:{verse} - {str(e)}"
+        }
+        
+        return templates.TemplateResponse("study.html", error_data)
+
+# Also update the API endpoint for consistency
+@app.get("/api/study/{book}/{chapter}/{verse}")
+async def api_study_verse(book: str, chapter: int, verse: int):
+    """
+    Direct API endpoint to test verse study functionality
+    """
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info(f"🔍 API verse study request: {book} {chapter}:{verse}")
+        
+        # Study the verse
+        result = await tanakh_session.study_verse(book, chapter, verse)
+        
+        # Get hebrew_text and handle both string and array formats
+        hebrew_text_raw = getattr(result, 'hebrew_text', [])
+        
+        # For API, provide both formats
+        if isinstance(hebrew_text_raw, list):
+            hebrew_text_string = " ".join(hebrew_text_raw)
+            hebrew_words_array = hebrew_text_raw
+        else:
+            hebrew_text_string = str(hebrew_text_raw)
+            hebrew_words_array = hebrew_text_raw.split() if hebrew_text_raw else []
+        
+        # Access VerseStudy object attributes directly
+        response = {
+            "success": True,
+            "book": book,
+            "chapter": chapter,
+            "verse": verse,
+            "hebrew_text": hebrew_text_string,  # String for display
+            "hebrew_words": hebrew_words_array,  # Array for processing
+            "analysis_results": getattr(result, 'analysis_results', []),
+            "words_analyzed": len(getattr(result, 'analysis_results', [])),
+            "timestamp": datetime.now().isoformat(),
+            "result_type": type(result).__name__,
+            "session_notes": getattr(result, 'session_notes', ''),
+            "study_time": str(getattr(result, 'study_time', '')),
+            "words_learned": getattr(result, 'words_learned', [])
+        }
+        
+        logger.info(f"✅ API response prepared: {len(response['analysis_results'])} analyses")
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ API verse study error: {str(e)}")
+        return {
+            "success": False,
             "error": str(e),
-            "verse_reference": f"{book} {chapter}:{verse}"
-        })
+            "book": book,
+            "chapter": chapter,
+            "verse": verse,
+            "error_type": type(e).__name__
+        }
+
+@app.get("/api/debug/tanakh-session")
+async def debug_tanakh_session():
+    """
+    Debug endpoint to check tanakh session status
+    """
+    try:
+        # Get basic info about the session
+        session_info = {
+            "session_exists": tanakh_session is not None,
+            "session_type": type(tanakh_session).__name__ if tanakh_session else None,
+            "session_attributes": [attr for attr in dir(tanakh_session) if not attr.startswith('_')] if tanakh_session else []
+        }
+        
+        # Try to get books if possible
+        if hasattr(tanakh_session, 'tanakh_data'):
+            books_available = list(tanakh_session.tanakh_data.keys())
+            session_info.update({
+                "books_available": books_available[:10],
+                "total_books": len(books_available)
+            })
+        
+        # Try to get analyzers info
+        if hasattr(tanakh_session, 'analyzers'):
+            session_info["analyzers_count"] = len(tanakh_session.analyzers)
+        
+        return session_info
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "session_ready": False,
+            "error_type": type(e).__name__
+        }
+
+@app.get("/api/test/genesis")
+async def test_genesis():
+    """
+    Test endpoint for Genesis 1:1 specifically
+    """
+    try:
+        result = await tanakh_session.study_verse("Gen", 1, 1)
+        
+        return {
+            "test": "Genesis 1:1",
+            "success": True,
+            "result_type": type(result).__name__,
+            "result_attributes": [attr for attr in dir(result) if not attr.startswith('_')],
+            "hebrew_text": getattr(result, 'hebrew_text', 'Not found'),
+            "analysis_results_count": len(getattr(result, 'analysis_results', [])),
+            "has_analysis_results": hasattr(result, 'analysis_results'),
+            "result_preview": str(result)[:300] if result else "No result"
+        }
+    except Exception as e:
+        return {
+            "test": "Genesis 1:1",
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
 
 # Utility functions
 async def get_system_status() -> Dict[str, str]:
