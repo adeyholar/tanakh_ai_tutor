@@ -1,0 +1,98 @@
+{
+  "vocabulary": {
+    "בְּרֵאשִׁ֖ית": {
+      "word": "בְּרֵאשִׁ֖ית",
+      "first_seen": "2025-07-19T12:03:20.134227",
+      "times_studied": 1,
+      "confidence_level": 0.2,
+      "translations_learned": [
+        "[AlephBERT analysis of בְּרֵאשִׁ֖ית]"
+      ],
+      "last_studied": "2025-07-19T12:03:20.134227",
+      "mastery_level": "beginner"
+    },
+    "בָּרָ֣א": {
+      "word": "בָּרָ֣א",
+      "first_seen": "2025-07-19T12:03:22.216021",
+      "times_studied": 1,
+      "confidence_level": 0.2,
+      "translations_learned": [
+        "[AlephBERT analysis of בָּרָ֣א]"
+      ],
+      "last_studied": "2025-07-19T12:03:22.216021",
+      "mastery_level": "beginner"
+    },
+    "אֱלֹהִ֑ים": {
+      "word": "אֱלֹהִ֑ים",
+      "first_seen": "2025-07-19T12:03:24.289718",
+      "times_studied": 1,
+      "confidence_level": 0.2,
+      "translations_learned": [
+        "[AlephBERT analysis of אֱלֹהִ֑ים]"
+      ],
+      "last_studied": "2025-07-19T12:03:24.289718",
+      "mastery_level": "beginner"
+    },
+    "אֵ֥ת": {
+      "word": "אֵ֥ת",
+      "first_seen": "2025-07-19T12:03:26.418629",
+      "times_studied": 1,
+      "confidence_level": 0.2,
+      "translations_learned": [
+        "[AlephBERT analysis of אֵ֥ת]"
+      ],
+      "last_studied": "2025-07-19T12:03:26.418629",
+      "mastery_level": "beginner"
+    },
+    "הַשָּׁמַ֖יִם": {
+      "word": "הַשָּׁמַ֖יִם",
+      "first_seen": "2025-07-19T12:03:28.611263",
+      "times_studied": 1,
+      "confidence_level": 0.2,
+      "translations_learned": [
+        "[AlephBERT analysis of הַשָּׁמַ֖יִם]"
+      ],
+      "last_studied": "2025-07-19T12:03:28.611263",
+      "mastery_level": "beginner"
+    },
+    "וְאֵ֥ת": {
+      "word": "וְאֵ֥ת",
+      "first_seen": "2025-07-19T12:03:30.790037",
+      "times_studied": 1,
+      "confidence_level": 0.2,
+      "translations_learned": [
+        "[AlephBERT analysis of וְאֵ֥ת]"
+      ],
+      "last_studied": "2025-07-19T12:03:30.790037",
+      "mastery_level": "beginner"
+    },
+    "הָאָֽרֶץ׃": {
+      "word": "הָאָֽרֶץ׃",
+      "first_seen": "2025-07-19T12:03:32.960798",
+      "times_studied": 1,
+      "confidence_level": 0.2,
+      "translations_learned": [
+        "[AlephBERT analysis of הָאָֽרֶץ׃]"
+      ],
+      "last_studied": "2025-07-19T12:03:32.960798",
+      "mastery_level": "beginner"
+    }
+  },
+  "last_saved": "2025-07-19T12:03:32.970807",
+  "session_stats": {
+    "session_duration": "0:00:21.711351",
+    "verses_studied_today": 1,
+    "words_studied_today": 7,
+    "total_vocabulary": 7,
+    "available_analyzers": [
+      "AlephBERT",
+      "Ollama-Llama3"
+    ],
+    "mastery_distribution": {
+      "beginner": 7,
+      "intermediate": 0,
+      "advanced": 0,
+      "mastered": 0
+    }
+  }
+}

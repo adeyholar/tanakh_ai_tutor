@@ -1,0 +1,14 @@
+{
+  "original_text": "אָדָ֥ם שֵׁ֖ת אֱנֽוֹשׁ׃",
+  "biblical_analysis": {
+    "morphological_analysis": "Detailed word forms and grammar",
+    "syntactic_structure": "Biblical Hebrew syntax patterns",
+    "lexical_semantics": "Word meanings in biblical context",
+    "accuracy_note": "This will be real AlephBERT analysis soon"
+  },
+  "tutor_explanation": "I'm excited to help you dive into this beautiful Hebrew text! Let's break it down together.\n\nThe text is: אָדָ֥ם שֵׁ֖ת אֱנֽוֹשׁ׃\n\n**Morphological Analysis:** Let's start by looking at the individual words and their forms. We have three words in this verse:\n\n1. אָדָ֥ם (Adam) - This is a proper noun, referring to the first human created by God (Genesis 2:7). The form כִּי־ is a construct state, which means that Adam is the subject of the sentence.\n2. שֵׁ֖ת (Shet) - This word is in the piel infinitive absolute form. In biblical Hebrew, the piel infinitive absolute is used to express purpose or intention. So, Shet here likely means \"to be\" or \"to exist\".\n3. אֱנֽוֹשׁ (Enosh) - This is also a proper noun, referring to one of Adam's descendants (Genesis 4:26). The form כִּי־ is a construct state, indicating that Enosh is the object of the sentence.\n\n**Syntactic Structure:** Now, let's look at the sentence structure. We have a simple sentence with two main clauses:\n\n",
+  "accuracy_score": 0.95,
+  "source_model": "hybrid_alephbert_llama3",
+  "timestamp": "2025-07-19T08:19:08.207225",
+  "session_id": "20250719_081840"
+}
