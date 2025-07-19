@@ -1,0 +1,25 @@
+Tractor: John Deere 5075E
+Last Service: 2025-06-15
+Hours: 1,250
+Status: Operational,
+Combine: Case IH 2150 Series
+Last Service: 2025-05-20
+Hours: 845
+Status: Needs Oil Change,
+Harvester: New Holland CR9.90
+Last Service: 2025-07-10
+Hours: 1,500
+Status: Operational,
+Seeder: Great Plains 3P606NT
+Last Service: 2025-04-30
+Hours: 600
+Status: Operational,
+Planter: Kinze 4900
+Last Service: 2025-03-15
+Hours: 520
+Status: Operational
+
+Sprayer: Apache 1020
+Last Service: 2025-07-01
+Hours: 300
+Status: Operational
