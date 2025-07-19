@@ -1,448 +1,356 @@
-# src/core/enhanced_alephbert_analyzer.py
+# src/core/external_hebrew_apis.py
 """
-Enhanced AlephBERT Analyzer - Week 3 Day 3
-Professional Biblical Hebrew grammar analysis using AlephBERT embeddings
+External Hebrew API Integrations - Week 3 Day 3
+Professional API integrations for enhanced Hebrew analysis
 """
 
-import torch
-import numpy as np
-from transformers import AutoTokenizer, AutoModel
-from typing import Dict, Any, Optional, List, Tuple
+import asyncio
+import aiohttp
+import requests
+from typing import Dict, List, Any, Optional, Union
+from dataclasses import dataclass
 from datetime import datetime
 import logging
-import re
 import json
 from pathlib import Path
 
+# Import our base analyzer
 from hebrew_analyzers import HebrewAnalyzer, AnalysisResult
 
-class EnhancedAlephBertAnalyzer(HebrewAnalyzer):
-    """Enhanced AlephBERT with real Hebrew grammar analysis"""
+@dataclass
+class HebrewAPIResult:
+    """Result from external Hebrew API"""
+    word: str
+    source: str
+    translation: str
+    transliteration: str
+    grammar_info: Dict[str, Any]
+    morphology: Dict[str, Any]
+    confidence: float
+    timestamp: datetime
+
+class SefariaMockAPI(HebrewAnalyzer):
+    """Mock integration with Sefaria-style Hebrew text API"""
     
     def __init__(self):
-        super().__init__("Enhanced-AlephBERT")
-        self.model: Optional[Any] = None
-        self.tokenizer: Optional[Any] = None
-        self.device: Optional[Any] = None
-        self.model_name = "onlplab/alephbert-base"
-        
-        # Hebrew grammar analysis components
-        self.hebrew_patterns = self._load_hebrew_patterns()
-        self.root_analyzer = HebrewRootAnalyzer()
-        self.morphology_classifier = HebrewMorphologyClassifier()
+        super().__init__("Sefaria-Mock")
+        self.base_url = "https://www.sefaria.org/api"
+        self.cache_path = Path("data/api_cache/sefaria_cache.json")
+        self.cache = {}
+        self._load_cache()
         
     def initialize(self) -> bool:
-        """Initialize enhanced AlephBERT with grammar components"""
+        """Initialize the Sefaria API connection"""
         try:
-            self.logger.info("Initializing Enhanced AlephBERT analyzer...")
-            
-            # Initialize base AlephBERT
-            if not self._initialize_alephbert():
-                return False
-            
-            # Initialize Hebrew analysis components
-            self.root_analyzer.initialize()
-            self.morphology_classifier.initialize()
-            
+            # Test connection (mock for now since we don't want to spam real API)
             self.is_available = True
-            self.logger.info("✅ Enhanced AlephBERT initialization successful!")
+            self.logger.info("✅ Sefaria Mock API initialized")
             return True
-            
         except Exception as e:
-            self.logger.error(f"Failed to initialize Enhanced AlephBERT: {e}")
-            self.is_available = False
-            return False
-    
-    def _initialize_alephbert(self) -> bool:
-        """Initialize the base AlephBERT model"""
-        try:
-            # Check GPU availability
-            if torch and torch.cuda.is_available():
-                self.device = torch.device("cuda")
-                gpu_name = torch.cuda.get_device_name(0)
-                self.logger.info(f"GPU detected: {gpu_name}")
-            else:
-                self.device = torch.device("cpu") if torch else "cpu"
-                self.logger.warning("No GPU detected, using CPU")
-            
-            # Load model and tokenizer
-            self.logger.info("Loading AlephBERT model...")
-            if AutoTokenizer and AutoModel:
-                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-                self.model = AutoModel.from_pretrained(self.model_name)
-                
-                if self.model is not None and hasattr(self.model, 'to') and self.device:
-                    self.model.to(self.device)
-                if self.model is not None and hasattr(self.model, 'eval'):
-                    self.model.eval()
-            
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"Failed to initialize base AlephBERT: {e}")
+            self.logger.error(f"Failed to initialize Sefaria API: {e}")
             return False
     
     async def analyze_word(self, word: str) -> AnalysisResult:
-        """Enhanced Hebrew word analysis with real grammar insights"""
-        if not self.is_available:
-            raise RuntimeError("Enhanced AlephBERT analyzer not initialized")
-        
+        """Analyze Hebrew word using Sefaria-style resources"""
         try:
-            self.logger.debug(f"Enhanced analysis of word: {word}")
+            # Check cache first
+            if word in self.cache:
+                cached_result = self.cache[word]
+                self.logger.debug(f"Using cached result for {word}")
+                return AnalysisResult(
+                    word=word,
+                    translation=cached_result.get('translation', 'Unknown'),
+                    grammar_info=cached_result.get('grammar_info', {}),
+                    confidence=0.70,
+                    model_used="Sefaria-Mock",
+                    timestamp=datetime.now()
+                )
             
-            # 1. Get AlephBERT embeddings
-            embeddings = await self._get_alephbert_embeddings(word)
+            # Mock API call (replace with real API in production)
+            mock_data = await self._mock_sefaria_lookup(word)
             
-            # 2. Analyze Hebrew root
-            root_analysis = self.root_analyzer.analyze_root(word)
+            # Create analysis result
+            analysis = AnalysisResult(
+                word=word,
+                translation=mock_data.get('translation', 'Unknown'),
+                grammar_info={
+                    'root': mock_data.get('root', 'Unknown'),
+                    'part_of_speech': mock_data.get('pos', 'Unknown'),
+                    'tense': mock_data.get('tense', 'N/A'),
+                    'source': 'Sefaria Hebrew Lexicon'
+                },
+                confidence=0.70,
+                model_used="Sefaria-Mock",
+                timestamp=datetime.now()
+            )
             
-            # 3. Morphological analysis
-            morphology = self.morphology_classifier.classify_morphology(word, embeddings)
-            
-            # 4. Grammar pattern matching
-            grammar_patterns = self._analyze_hebrew_patterns(word)
-            
-            # 5. Biblical context analysis
-            biblical_context = self._analyze_biblical_context(word, embeddings)
-            
-            # Combine all analyses
-            comprehensive_grammar = {
-                **root_analysis,
-                **morphology,
-                **grammar_patterns,
-                **biblical_context,
-                'alephbert_confidence': self._calculate_confidence(embeddings),
-                'embedding_dimensions': len(embeddings) if embeddings is not None else 0
+            # Cache the result
+            self.cache[word] = {
+                'translation': analysis.translation,
+                'grammar_info': analysis.grammar_info,
+                'timestamp': analysis.timestamp.isoformat()
             }
+            self._save_cache()
             
-            # Generate meaningful translation
-            translation = self._generate_translation(word, comprehensive_grammar)
+            self.analysis_count += 1
+            return analysis
+            
+        except Exception as e:
+            self.logger.error(f"Error with Sefaria API for '{word}': {e}")
+            raise
+    
+    async def _mock_sefaria_lookup(self, word: str) -> Dict[str, str]:
+        """Mock Sefaria API lookup - replace with real API calls"""
+        # Hebrew word dictionary for common biblical words
+        mock_lexicon = {
+            'בְּרֵאשִׁ֖ית': {
+                'translation': 'in the beginning',
+                'root': 'ראש',
+                'pos': 'prepositional phrase',
+                'tense': 'N/A'
+            },
+            'בָּרָ֣א': {
+                'translation': 'created',
+                'root': 'ברא',
+                'pos': 'verb',
+                'tense': 'qal perfect'
+            },
+            'אֱלֹהִ֑ים': {
+                'translation': 'God',
+                'root': 'אלה',
+                'pos': 'noun',
+                'tense': 'N/A'
+            },
+            'אֵ֥ת': {
+                'translation': '(direct object marker)',
+                'root': 'את',
+                'pos': 'particle',
+                'tense': 'N/A'
+            },
+            'הַשָּׁמַ֖יִם': {
+                'translation': 'the heavens',
+                'root': 'שמה',
+                'pos': 'noun',
+                'tense': 'N/A'
+            }
+        }
+        
+        # Clean the word for lookup
+        clean_word = self._clean_hebrew_for_lookup(word)
+        
+        # Return mock data
+        if clean_word in mock_lexicon:
+            return mock_lexicon[clean_word]
+        else:
+            return {
+                'translation': f'[Unknown: {word}]',
+                'root': 'Unknown',
+                'pos': 'Unknown',
+                'tense': 'N/A'
+            }
+    
+    def _clean_hebrew_for_lookup(self, word: str) -> str:
+        """Clean Hebrew word for API lookup"""
+        # Remove final punctuation but keep nikkud for now
+        import re
+        cleaned = re.sub(r'[׃.,;!?]$', '', word)
+        return cleaned.strip()
+    
+    def _load_cache(self):
+        """Load API response cache"""
+        try:
+            if self.cache_path.exists():
+                with open(self.cache_path, 'r', encoding='utf-8') as f:
+                    self.cache = json.load(f)
+                self.logger.debug(f"Loaded {len(self.cache)} cached entries")
+        except Exception as e:
+            self.logger.warning(f"Could not load cache: {e}")
+            self.cache = {}
+    
+    def _save_cache(self):
+        """Save API response cache"""
+        try:
+            self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.cache_path, 'w', encoding='utf-8') as f:
+                json.dump(self.cache, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            self.logger.warning(f"Could not save cache: {e}")
+
+class HebrewMorphologyAPI(HebrewAnalyzer):
+    """Hebrew morphological analysis API integration"""
+    
+    def __init__(self):
+        super().__init__("HebrewMorphology")
+        self.api_timeout = 10
+        
+    def initialize(self) -> bool:
+        """Initialize morphology analyzer"""
+        try:
+            # Mock initialization for now
+            self.is_available = True
+            self.logger.info("✅ Hebrew Morphology API initialized")
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to initialize Morphology API: {e}")
+            return False
+    
+    async def analyze_word(self, word: str) -> AnalysisResult:
+        """Perform morphological analysis of Hebrew word"""
+        try:
+            # Mock morphological analysis
+            morphology_data = await self._mock_morphological_analysis(word)
             
             analysis = AnalysisResult(
                 word=word,
-                translation=translation,
-                grammar_info=comprehensive_grammar,
-                confidence=comprehensive_grammar.get('alephbert_confidence', 0.85),
-                model_used="Enhanced-AlephBERT",
+                translation=morphology_data.get('lemma', 'Unknown'),
+                grammar_info={
+                    'morphology': morphology_data.get('morphology', {}),
+                    'word_form': morphology_data.get('word_form', 'Unknown'),
+                    'parsing': morphology_data.get('parsing', 'Unknown'),
+                    'strong_number': morphology_data.get('strong_number', 'N/A')
+                },
+                confidence=0.75,
+                model_used="HebrewMorphology",
                 timestamp=datetime.now()
             )
             
             self.analysis_count += 1
-            self.logger.debug(f"Enhanced analysis complete. Total analyses: {self.analysis_count}")
-            
             return analysis
             
         except Exception as e:
-            self.logger.error(f"Error in enhanced analysis of '{word}': {e}")
+            self.logger.error(f"Error with Morphology API for '{word}': {e}")
             raise
     
-    async def _get_alephbert_embeddings(self, word: str) -> Optional[np.ndarray]:
-        """Get embeddings from AlephBERT"""
-        if self.model is None or self.tokenizer is None:
-            return None
-        
-        try:
-            # Tokenize
-            if hasattr(self.tokenizer, '__call__'):
-                inputs = self.tokenizer(word, return_tensors="pt", padding=True)
-            else:
-                inputs = self.tokenizer.encode_plus(word, return_tensors="pt", padding=True)
-            
-            if self.device and hasattr(inputs, 'to'):
-                inputs = {k: v.to(self.device) for k, v in inputs.items()}
-            
-            # Get embeddings
-            if torch:
-                with torch.no_grad():
-                    if hasattr(self.model, '__call__'):
-                        outputs = self.model(**inputs)
-                    else:
-                        outputs = self.model.forward(**inputs)
-                    # Get [CLS] token embedding
-                    embeddings = outputs.last_hidden_state[:, 0, :].cpu().numpy().flatten()
-                    return embeddings
-            
-            return None
-            
-        except Exception as e:
-            self.logger.warning(f"Could not get embeddings for {word}: {e}")
-            return None
-    
-    def _load_hebrew_patterns(self) -> Dict[str, Any]:
-        """Load Hebrew grammar patterns"""
-        return {
-            # Verb patterns
-            'verb_patterns': {
-                'qal_perfect_3ms': r'.*[בגדכפת].*',
-                'piel_perfect': r'.*[אעיו].*',
-                'hiphil': r'^ה.*',
-                'niphal': r'^נ.*'
-            },
-            # Noun patterns
-            'noun_patterns': {
-                'construct_state': r'.*ת$|.*י$',
-                'definite_article': r'^ה.*',
-                'plural_masculine': r'.*ים$',
-                'plural_feminine': r'.*ות$'
-            },
-            # Preposition patterns
-            'preposition_patterns': {
-                'with_preposition': r'^[בכלמ].*',
-                'compound_preposition': r'^[אמע]ל.*'
-            }
-        }
-    
-    def _analyze_hebrew_patterns(self, word: str) -> Dict[str, Any]:
-        """Analyze Hebrew word using pattern matching"""
-        results = {
-            'pattern_analysis': {},
-            'word_type': 'unknown',
-            'grammatical_features': []
-        }
-        
-        clean_word = self._clean_hebrew_word(word)
-        
-        # Enhanced word type detection based on known words first
-        known_word_types = {
-            'בְּרֵאשִׁ֖ית': 'prepositional_phrase',
-            'בָּרָ֣א': 'verb',
-            'אֱלֹהִ֑ים': 'noun',
-            'אֵ֥ת': 'particle',
-            'הַשָּׁמַ֖יִם': 'noun',
-            'הָאָֽרֶץ׃': 'noun'
-        }
-        
-        if clean_word in known_word_types:
-            results['word_type'] = known_word_types[clean_word]
-            results['grammatical_features'].append(f"identified_as_{results['word_type']}")
-        else:
-            # Fall back to pattern matching for unknown words
-            # Check verb patterns
-            for pattern_name, pattern in self.hebrew_patterns['verb_patterns'].items():
-                if re.match(pattern, clean_word):
-                    results['pattern_analysis'][pattern_name] = True
-                    results['word_type'] = 'verb'
-                    results['grammatical_features'].append(pattern_name)
-            
-            # Check noun patterns
-            for pattern_name, pattern in self.hebrew_patterns['noun_patterns'].items():
-                if re.match(pattern, clean_word):
-                    results['pattern_analysis'][pattern_name] = True
-                    if results['word_type'] == 'unknown':
-                        results['word_type'] = 'noun'
-                    results['grammatical_features'].append(pattern_name)
-            
-            # Check preposition patterns
-            for pattern_name, pattern in self.hebrew_patterns['preposition_patterns'].items():
-                if re.match(pattern, clean_word):
-                    results['pattern_analysis'][pattern_name] = True
-                    if results['word_type'] == 'unknown':
-                        results['word_type'] = 'preposition'
-                    results['grammatical_features'].append(pattern_name)
-        
-        return results
-    
-    def _analyze_biblical_context(self, word: str, embeddings: Optional[np.ndarray]) -> Dict[str, Any]:
-        """Analyze biblical context using embeddings"""
-        context = {
-            'biblical_frequency': 'unknown',
-            'semantic_field': 'unknown',
-            'theological_significance': 'unknown'
-        }
-        
-        # Biblical Hebrew word frequency analysis (enhanced with actual data)
-        common_words = {
-            'בְּרֵאשִׁ֖ית': {'biblical_frequency': 'rare_but_significant', 'semantic_field': 'temporal_creation', 'theological_significance': 'very_high'},
-            'בָּרָ֣א': {'biblical_frequency': 'common', 'semantic_field': 'divine_action', 'theological_significance': 'very_high'},
-            'אֱלֹהִ֑ים': {'biblical_frequency': 'very_common', 'semantic_field': 'deity', 'theological_significance': 'highest'},
-            'אֵ֥ת': {'biblical_frequency': 'extremely_common', 'semantic_field': 'grammar_particle', 'theological_significance': 'none'},
-            'הַשָּׁמַ֖יִם': {'biblical_frequency': 'common', 'semantic_field': 'cosmology', 'theological_significance': 'high'},
-            'הָאָֽרֶץ׃': {'biblical_frequency': 'very_common', 'semantic_field': 'cosmology', 'theological_significance': 'medium'}
-        }
-        
-        clean_word = self._clean_hebrew_word(word)
-        if clean_word in common_words:
-            word_data = common_words[clean_word]
-            context.update(word_data)
-        
-        return context
-    
-    def _calculate_confidence(self, embeddings: Optional[np.ndarray]) -> float:
-        """Calculate confidence based on embedding quality"""
-        if embeddings is None:
-            return 0.60
-        
-        # Simple confidence calculation based on embedding magnitude
-        magnitude = np.linalg.norm(embeddings)
-        # Normalize to 0.7-0.95 range for AlephBERT
-        confidence = min(0.95, max(0.70, 0.70 + (magnitude / 1000)))
-        return round(confidence, 2)
-    
-    def _generate_translation(self, word: str, grammar: Dict[str, Any]) -> str:
-        """Generate meaningful translation based on analysis"""
-        # Enhanced translation based on grammar analysis
-        base_translations = {
-            'בְּרֵאשִׁ֖ית': 'in the beginning (temporal prepositional phrase)',
-            'בָּרָ֣א': 'he created (qal perfect 3rd masculine singular)',
-            'אֱלֹהִ֑ים': 'God (plural form, singular meaning)',
-            'אֵ֥ת': 'direct object marker (untranslatable particle)',
-            'הַשָּׁמַ֖יִם': 'the heavens (definite article + dual/plural noun)',
-            'הָאָֽרֶץ׃': 'the earth (definite article + feminine singular noun)'
-        }
-        
-        clean_word = self._clean_hebrew_word(word)
-        if clean_word in base_translations:
-            return base_translations[clean_word]
-        
-        # Fallback to grammatical description
-        word_type = grammar.get('word_type', 'unknown')
-        features = grammar.get('grammatical_features', [])
-        if features:
-            feature_desc = ', '.join(features[:2])  # First 2 features
-            return f"[{word_type} with {feature_desc}]"
-        
-        return f"[Biblical Hebrew {word_type}]"
-    
-    def _clean_hebrew_word(self, word: str) -> str:
-        """Clean Hebrew word for analysis"""
-        import re
-        # Remove final punctuation but keep nikkud and Hebrew letters
-        cleaned = re.sub(r'[׃.,;!?\s]+$', '', word)
-        return cleaned.strip()
-
-class HebrewRootAnalyzer:
-    """Analyzes Hebrew word roots"""
-    
-    def __init__(self):
-        self.root_database = self._load_root_database()
-    
-    def initialize(self):
-        """Initialize root analyzer"""
-        pass
-    
-    def analyze_root(self, word: str) -> Dict[str, str]:
-        """Extract Hebrew root from word"""
-        clean_word = word.rstrip('׃.,;!?')
-        
-        # Simple root extraction (could be enhanced with real morphological analysis)
-        known_roots = {
-            'בְּרֵאשִׁ֖ית': 'ראש',
-            'בָּרָ֣א': 'ברא',
-            'אֱלֹהִ֑ים': 'אלה',
-            'הַשָּׁמַ֖יִם': 'שמה',
-            'הָאָֽרֶץ׃': 'ארץ'
-        }
-        
-        root = known_roots.get(clean_word, 'unknown')
-        
-        return {
-            'hebrew_root': root,
-            'root_meaning': self._get_root_meaning(root),
-            'root_family': self._get_root_family(root)
-        }
-    
-    def _load_root_database(self) -> Dict[str, Any]:
-        """Load Hebrew root database"""
-        return {}  # Placeholder for extensive root database
-    
-    def _get_root_meaning(self, root: str) -> str:
-        """Get root meaning"""
-        root_meanings = {
-            'ראש': 'head, beginning, chief',
-            'ברא': 'create, make',
-            'אלה': 'god, deity, divine',
-            'שמה': 'heaven, sky',
-            'ארץ': 'land, earth, ground'
-        }
-        return root_meanings.get(root, 'unknown')
-    
-    def _get_root_family(self, root: str) -> str:
-        """Get related words from same root"""
-        root_families = {
-            'ראש': 'ראש, ראשון, ראשית',
-            'ברא': 'ברא, בריאה, בורא',
-            'אלה': 'אלהים, אל, אלוה'
-        }
-        return root_families.get(root, 'unknown')
-
-class HebrewMorphologyClassifier:
-    """Classifies Hebrew word morphology"""
-    
-    def initialize(self):
-        """Initialize morphology classifier"""
-        pass
-    
-    def classify_morphology(self, word: str, embeddings: Optional[np.ndarray]) -> Dict[str, Any]:
-        """Classify Hebrew word morphology"""
-        clean_word = word.rstrip('׃.,;!?')
-        
-        # Enhanced morphological classification
-        morphology_data = {
+    async def _mock_morphological_analysis(self, word: str) -> Dict[str, Any]:
+        """Mock morphological analysis - replace with real API"""
+        # Simplified morphology for common words
+        morphology_db = {
             'בְּרֵאשִׁ֖ית': {
-                'part_of_speech': 'prepositional phrase',
-                'morphological_analysis': 'ב (preposition) + ראשית (construct noun)',
-                'gender': 'feminine',
-                'number': 'singular',
-                'state': 'construct'
+                'lemma': 'beginning',
+                'morphology': {
+                    'prefix': 'ב',
+                    'stem': 'ראש',
+                    'suffix': 'ית'
+                },
+                'word_form': 'construct',
+                'parsing': 'prep + noun fs construct',
+                'strong_number': 'H7225'
             },
             'בָּרָ֣א': {
-                'part_of_speech': 'verb',
-                'morphological_analysis': 'qal perfect 3rd person masculine singular',
-                'verbal_stem': 'qal',
-                'tense': 'perfect',
-                'person': '3rd',
-                'gender': 'masculine',
-                'number': 'singular'
-            },
-            'אֱלֹהִ֑ים': {
-                'part_of_speech': 'noun',
-                'morphological_analysis': 'plural form with singular meaning',
-                'gender': 'masculine',
-                'number': 'plural (intensive)',
-                'state': 'absolute'
+                'lemma': 'create',
+                'morphology': {
+                    'stem': 'ברא',
+                    'binyan': 'qal',
+                    'person': '3ms',
+                    'tense': 'perfect'
+                },
+                'word_form': 'verb',
+                'parsing': 'qal perfect 3ms',
+                'strong_number': 'H1254'
             }
         }
         
-        return morphology_data.get(clean_word, {
-            'part_of_speech': 'unknown',
-            'morphological_analysis': 'analysis unavailable',
-            'notes': f'Enhanced analysis needed for {word}'
+        clean_word = word.rstrip('׃.,;!?')
+        return morphology_db.get(clean_word, {
+            'lemma': f'[Morphology unknown for {word}]',
+            'morphology': {},
+            'word_form': 'Unknown',
+            'parsing': 'Unknown',
+            'strong_number': 'N/A'
         })
 
+class EnhancedHebrewAI:
+    """Enhanced Hebrew AI combining local and external resources"""
+    
+    def __init__(self):
+        self.local_analyzers = []
+        self.external_apis = []
+        self.logger = logging.getLogger("EnhancedHebrewAI")
+        
+    async def initialize_all_sources(self):
+        """Initialize all available Hebrew analysis sources"""
+        self.logger.info("🚀 Initializing Enhanced Hebrew AI...")
+        
+        # Import and initialize local analyzers
+        try:
+            from hebrew_analyzers import AlephBertAnalyzer, OllamaAnalyzer
+            
+            alephbert = AlephBertAnalyzer()
+            if alephbert.initialize():
+                self.local_analyzers.append(alephbert)
+                self.logger.info("✅ AlephBERT local analyzer ready")
+            
+            ollama = OllamaAnalyzer()
+            if ollama.initialize():
+                self.local_analyzers.append(ollama)
+                self.logger.info("✅ Ollama local analyzer ready")
+                
+        except Exception as e:
+            self.logger.warning(f"Some local analyzers failed: {e}")
+        
+        # Initialize external APIs
+        sefaria = SefariaMockAPI()
+        if sefaria.initialize():
+            self.external_apis.append(sefaria)
+            self.logger.info("✅ Sefaria API ready")
+        
+        morphology = HebrewMorphologyAPI()
+        if morphology.initialize():
+            self.external_apis.append(morphology)
+            self.logger.info("✅ Morphology API ready")
+        
+        total_sources = len(self.local_analyzers) + len(self.external_apis)
+        self.logger.info(f"🎯 Enhanced Hebrew AI ready with {total_sources} sources")
+    
+    async def comprehensive_analysis(self, word: str) -> Dict[str, AnalysisResult]:
+        """Get comprehensive analysis from all available sources"""
+        results = {}
+        
+        # Analyze with local models
+        for analyzer in self.local_analyzers:
+            try:
+                result = await analyzer.analyze_word(word)
+                results[analyzer.name] = result
+            except Exception as e:
+                self.logger.warning(f"Local analysis failed with {analyzer.name}: {e}")
+        
+        # Analyze with external APIs
+        for api in self.external_apis:
+            try:
+                result = await api.analyze_word(word)
+                results[api.name] = result
+            except Exception as e:
+                self.logger.warning(f"External API failed with {api.name}: {e}")
+        
+        return results
+
 # Demo function
-async def demo_enhanced_alephbert():
-    """Demo the enhanced AlephBERT analyzer"""
-    print("🎓 Enhanced AlephBERT Demo - Week 3 Day 3")
+async def demo_enhanced_hebrew_ai():
+    """Demonstrate the enhanced Hebrew AI system"""
+    print("🎓 Enhanced Hebrew AI Demo - Week 3 Day 3")
     print("=" * 50)
     
-    analyzer = EnhancedAlephBertAnalyzer()
-    if not analyzer.initialize():
-        print("❌ Failed to initialize Enhanced AlephBERT")
-        return
+    # Initialize enhanced system
+    enhanced_ai = EnhancedHebrewAI()
+    await enhanced_ai.initialize_all_sources()
     
-    # Test words
-    test_words = ["בְּרֵאשִׁ֖ית", "בָּרָ֣א", "אֱלֹהִ֑ים"]
+    # Test word
+    test_word = "בְּרֵאשִׁ֖ית"
+    print(f"\n📖 Comprehensive analysis of: {test_word}")
+    print("-" * 30)
     
-    for word in test_words:
-        print(f"\n📖 Enhanced analysis of: {word}")
-        print("-" * 30)
-        
-        try:
-            result = await analyzer.analyze_word(word)
-            print(f"Translation: {result.translation}")
-            print(f"Confidence: {result.confidence}")
-            print(f"Word Type: {result.grammar_info.get('word_type', 'unknown')}")
-            print(f"Hebrew Root: {result.grammar_info.get('hebrew_root', 'unknown')}")
-            print(f"Root Meaning: {result.grammar_info.get('root_meaning', 'unknown')}")
-            print(f"Morphology: {result.grammar_info.get('morphological_analysis', 'unknown')}")
-            print(f"Biblical Context: {result.grammar_info.get('biblical_frequency', 'unknown')}")
-            
-        except Exception as e:
-            print(f"❌ Analysis failed: {e}")
+    # Get comprehensive analysis
+    results = await enhanced_ai.comprehensive_analysis(test_word)
     
-    print(f"\n📊 Total analyses performed: {analyzer.analysis_count}")
-    print("✅ Enhanced AlephBERT demo complete!")
+    # Display results
+    for source, result in results.items():
+        print(f"\n🔍 {source}:")
+        print(f"   Translation: {result.translation}")
+        print(f"   Confidence: {result.confidence}")
+        print(f"   Grammar: {result.grammar_info}")
+    
+    print(f"\n📊 Total analysis sources: {len(results)}")
+    print("✅ Enhanced Hebrew AI demo complete!")
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(demo_enhanced_alephbert())
+    asyncio.run(demo_enhanced_hebrew_ai())
