@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-12"><h2>🔍 Hebrew Word Analysis</h2></div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h5>Enter Hebrew Word</h5></div>
+            <div class="card-body">
+                <form method="POST" action="/analyze-word-form">
+                    <div class="mb-3">
+                        <label for="hebrew_word" class="form-label">Hebrew Word:</label>
+                        <input type="text" class="form-control hebrew-text" id="hebrew_word" name="hebrew_word" 
+                               placeholder="בְּרֵאשִׁית" required style="font-size: 1.5em;">
+                    </div>
+                    <div class="mb-3">
+                        <label for="user_id" class="form-label">User ID:</label>
+                        <input type="text" class="form-control" id="user_id" name="user_id" value="demo_user">
+                    </div>
+                    <button type="submit" class="btn btn-primary">🔍 Analyze Word</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        {% if analysis_result %}
+        <div class="card analysis-card">
+            <div class="card-header"><h5>🎯 Analysis Results</h5></div>
+            <div class="card-body">
+                <h4 class="hebrew-text text-center mb-3">{{ analyzed_word }}</h4>
+                <p><strong>Translation:</strong> {{ analysis_result.translation }}</p>
+                <p><strong>Confidence:</strong> 
+                    <span class="confidence-high">{{ "%.1f" | format(analysis_result.confidence * 100) }}%</span>
+                </p>
+                <p><strong>Root:</strong> <span class="hebrew-text">{{ analysis_result.grammar_info.hebrew_root }}</span></p>
+                <p><strong>Word Type:</strong> {{ analysis_result.grammar_info.word_type }}</p>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <h5>💡 How It Works</h5>
+            <p>Enter a Hebrew word above to get comprehensive AI analysis including:</p>
+            <ul>
+                <li>Translation and meaning</li>
+                <li>Hebrew root extraction</li>
+                <li>Grammatical classification</li>
+                <li>Biblical context and frequency</li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

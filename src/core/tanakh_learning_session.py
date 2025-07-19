@@ -1,324 +1,393 @@
-# src/core/hebrew_analyzers.py
+# src/core/tanakh_learning_session.py
 """
-Professional Hebrew AI Analyzers - Week 3 Day 1
-Object-Oriented Architecture for Hebrew Text Analysis
+Tanakh Learning Session Manager - Week 3 Day 2
+Object-Oriented Hebrew Bible Learning System
 """
 
-from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, Union
-from dataclasses import dataclass
-from datetime import datetime
-import logging
+import json
 import asyncio
+from typing import Dict, List, Any, Optional, Tuple
+from dataclasses import dataclass, asdict
+from datetime import datetime
+from pathlib import Path
+import logging
 
-# PyTorch and Transformers imports with type handling
-try:
-    import torch
-    from transformers import AutoTokenizer, AutoModel
-    TORCH_AVAILABLE = True
-except ImportError:
-    TORCH_AVAILABLE = False
-    # Type stubs for when torch isn't available
-    torch = None
-    AutoTokenizer = None
-    AutoModel = None
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Import our new OOP analyzers
+from src.core.hebrew_analyzers import HebrewAnalyzer, AlephBertAnalyzer, OllamaAnalyzer, AnalysisResult
 
 @dataclass
-class AnalysisResult:
-    """Structured result from Hebrew analysis"""
+class WordLearning:
+    """Tracks learning progress for a specific Hebrew word"""
     word: str
-    translation: str
-    grammar_info: Dict[str, Any]
-    confidence: float
-    model_used: str
-    timestamp: datetime
+    first_seen: datetime
+    times_studied: int
+    confidence_level: float
+    translations_learned: List[str]
+    last_studied: datetime
+    mastery_level: str  # "beginner", "intermediate", "advanced", "mastered"
 
+@dataclass
+class VerseStudy:
+    """Represents a complete verse study session"""
+    book: str
+    chapter: int
+    verse: int
+    hebrew_text: List[str]
+    analysis_results: List[AnalysisResult]
+    study_time: datetime
+    words_learned: List[str]
+    session_notes: str
 
-class HebrewAnalyzer(ABC):
-    """Abstract base class for Hebrew text analyzers"""
+class TanakhLearningSession:
+    """Professional Hebrew Bible learning session manager"""
     
-    def __init__(self, name: str):
-        self.name = name
-        self.is_available = False
-        self.logger = logging.getLogger(f"HebrewAI.{name}")
-        self.analysis_count = 0
+    def __init__(self, data_path: str = "data/tanakh/hebrew_bible_with_nikkud.json"):
+        self.data_path = Path(data_path)
+        self.progress_path = Path("data/progress/learning_progress.json")
+        self.tanakh_data: Dict[str, Any] = {}
+        self.vocabulary: Dict[str, WordLearning] = {}
+        self.study_history: List[VerseStudy] = []
         
-    @abstractmethod
-    async def analyze_word(self, word: str) -> AnalysisResult:
-        """Analyze a single Hebrew word"""
-        pass
-    
-    @abstractmethod
-    def initialize(self) -> bool:
-        """Initialize the analyzer and check availability"""
-        pass
-    
-    def get_stats(self) -> Dict[str, Any]:
-        """Get analyzer statistics"""
-        return {
-            "name": self.name,
-            "available": self.is_available,
-            "analyses_performed": self.analysis_count
-        }
-
-
-class AlephBertAnalyzer(HebrewAnalyzer):
-    """Biblical Hebrew specialist using AlephBERT model"""
-    
-    def __init__(self):
-        super().__init__("AlephBERT")
-        self.model: Optional[Any] = None  # More flexible typing
-        self.tokenizer: Optional[Any] = None  # More flexible typing
-        self.device: Optional[Any] = None
-        self.model_name = "onlplab/alephbert-base"
+        # Initialize analyzers
+        self.alephbert = AlephBertAnalyzer()
+        self.ollama = OllamaAnalyzer()
+        self.available_analyzers: List[HebrewAnalyzer] = []
         
-    def initialize(self) -> bool:
-        """Initialize AlephBERT model and check GPU availability"""
-        if not TORCH_AVAILABLE:
-            self.logger.error("PyTorch and transformers not available")
-            return False
-            
+        # Session statistics
+        self.session_start = datetime.now()
+        self.words_studied_today = 0
+        self.verses_studied_today = 0
+        
+        # Setup logging
+        self.logger = logging.getLogger("TanakhLearning")
+        
+    async def initialize(self) -> bool:
+        """Initialize the learning session"""
         try:
-            self.logger.info("Initializing AlephBERT analyzer...")
+            self.logger.info("🚀 Initializing Tanakh Learning Session...")
             
-            # Check GPU availability
-            if torch and torch.cuda.is_available():
-                self.device = torch.device("cuda")
-                gpu_name = torch.cuda.get_device_name(0)
-                self.logger.info(f"GPU detected: {gpu_name}")
-            else:
-                self.device = torch.device("cpu") if torch else "cpu"
-                self.logger.warning("No GPU detected, using CPU")
+            # Load Tanakh data
+            if not await self._load_tanakh_data():
+                return False
             
-            # Load model and tokenizer
-            self.logger.info("Loading AlephBERT model...")
-            if AutoTokenizer and AutoModel:
-                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-                self.model = AutoModel.from_pretrained(self.model_name)
-                
-                # Move to device if available and model is not None
-                if self.model is not None and hasattr(self.model, 'to') and self.device:
-                    self.model.to(self.device)
-                if self.model is not None and hasattr(self.model, 'eval'):
-                    self.model.eval()
+            # Initialize AI analyzers
+            await self._initialize_analyzers()
             
-            self.is_available = True
-            self.logger.info("AlephBERT initialization successful!")
+            # Load user progress
+            await self._load_progress()
+            
+            self.logger.info("✅ Tanakh Learning Session ready!")
             return True
             
         except Exception as e:
-            self.logger.error(f"Failed to initialize AlephBERT: {e}")
-            self.is_available = False
+            self.logger.error(f"❌ Failed to initialize learning session: {e}")
             return False
     
-    async def analyze_word(self, word: str) -> AnalysisResult:
-        """Analyze Hebrew word using AlephBERT"""
-        if not self.is_available:
-            raise RuntimeError("AlephBERT analyzer not initialized")
-        
-        if self.model is None or self.tokenizer is None:
-            raise RuntimeError("Model or tokenizer not loaded")
-        
+    async def _load_tanakh_data(self) -> bool:
+        """Load the complete Hebrew Bible data"""
         try:
-            self.logger.debug(f"Analyzing word: {word}")
+            if not self.data_path.exists():
+                self.logger.error(f"Tanakh data file not found: {self.data_path}")
+                return False
             
-            # Tokenize the Hebrew word - check if tokenizer is callable
-            if hasattr(self.tokenizer, '__call__'):
-                inputs = self.tokenizer(word, return_tensors="pt", padding=True)
-            else:
-                # Fallback method
-                inputs = self.tokenizer.encode_plus(word, return_tensors="pt", padding=True)
+            with open(self.data_path, 'r', encoding='utf-8') as f:
+                self.tanakh_data = json.load(f)
             
-            if self.device and hasattr(inputs, 'to'):
-                inputs = {k: v.to(self.device) for k, v in inputs.items()}
-            
-            # Get model embeddings - check if model is callable
-            if torch:
-                with torch.no_grad():
-                    if hasattr(self.model, '__call__'):
-                        outputs = self.model(**inputs)
-                    else:
-                        outputs = self.model.forward(**inputs)
-                    # Get the [CLS] token embedding (sentence representation)
-                    word_embedding = outputs.last_hidden_state[:, 0, :].cpu().numpy()
-                    embedding_shape = str(word_embedding.shape)
-            else:
-                embedding_shape = "N/A"
-            
-            # Create analysis result
-            analysis = AnalysisResult(
-                word=word,
-                translation=f"[AlephBERT analysis of {word}]",
-                grammar_info={
-                    "embedding_shape": embedding_shape,
-                    "model_confidence": 0.85,
-                    "biblical_context": True,
-                    "device_used": str(self.device)
-                },
-                confidence=0.85,
-                model_used="AlephBERT",
-                timestamp=datetime.now()
-            )
-            
-            self.analysis_count += 1
-            self.logger.debug(f"Analysis complete. Total analyses: {self.analysis_count}")
-            
-            return analysis
+            book_count = len(self.tanakh_data)
+            self.logger.info(f"📚 Loaded {book_count} books of the Hebrew Bible")
+            return True
             
         except Exception as e:
-            self.logger.error(f"Error analyzing word '{word}': {e}")
-            raise
+            self.logger.error(f"Failed to load Tanakh data: {e}")
+            return False
     
-    def get_gpu_info(self) -> Dict[str, Any]:
-        """Get GPU utilization information"""
-        if torch and self.device and hasattr(self.device, 'type') and self.device.type == "cuda":
-            try:
-                return {
-                    "device": str(self.device),
-                    "gpu_name": torch.cuda.get_device_name(0),
-                    "memory_allocated": torch.cuda.memory_allocated(0) / 1024**3,  # GB
-                    "memory_reserved": torch.cuda.memory_reserved(0) / 1024**3,   # GB
-                    "utilization": "Available"
-                }
-            except Exception:
-                return {"device": str(self.device), "gpu_status": "Error getting GPU info"}
-        else:
-            return {"device": "CPU", "gpu_status": "Not available"}
-    
-    def cleanup(self):
-        """Clean up GPU memory"""
-        if torch and self.device and hasattr(self.device, 'type') and self.device.type == "cuda":
-            try:
-                torch.cuda.empty_cache()
-                self.logger.info("GPU memory cleared")
-            except Exception as e:
-                self.logger.warning(f"Could not clear GPU memory: {e}")
-
-
-class OllamaAnalyzer(HebrewAnalyzer):
-    """Educational Hebrew tutor using Ollama Llama 3"""
-    
-    def __init__(self):
-        super().__init__("Ollama-Llama3")
-        self.base_url = "http://localhost:11434"
-        self.model_name = "llama3:8b"  # Use the exact model name
+    async def _initialize_analyzers(self):
+        """Initialize available AI analyzers"""
+        self.logger.info("🤖 Initializing AI analyzers...")
         
-    def initialize(self) -> bool:
-        """Check if Ollama is available"""
+        # Try AlephBERT
+        if self.alephbert.initialize():
+            self.available_analyzers.append(self.alephbert)
+            self.logger.info("✅ AlephBERT ready for Biblical Hebrew analysis")
+        else:
+            self.logger.warning("⚠️ AlephBERT not available")
+        
+        # Try Ollama (but don't fail if it's not working)
         try:
-            import requests
-            response = requests.get(f"{self.base_url}/api/tags", timeout=5)
-            if response.status_code == 200:
-                models = response.json().get('models', [])
-                model_names = [model['name'] for model in models]
-                if any('llama3' in name for name in model_names):
-                    self.is_available = True
-                    self.logger.info("Ollama Llama 3 is available!")
-                    return True
-                else:
-                    self.logger.warning("Llama 3 model not found in Ollama")
-                    return False
+            if self.ollama.initialize():
+                self.available_analyzers.append(self.ollama)
+                self.logger.info("✅ Ollama ready for educational explanations")
             else:
-                self.logger.warning("Ollama service not responding")
-                return False
+                self.logger.warning("⚠️ Ollama not available")
+        except Exception as e:
+            self.logger.warning(f"⚠️ Ollama initialization failed: {e}")
+        
+        self.logger.info(f"🎯 {len(self.available_analyzers)} analyzers available")
+    
+    async def _load_progress(self):
+        """Load user learning progress"""
+        try:
+            if self.progress_path.exists():
+                with open(self.progress_path, 'r', encoding='utf-8') as f:
+                    progress_data = json.load(f)
+                
+                # Load vocabulary progress
+                for word, data in progress_data.get('vocabulary', {}).items():
+                    self.vocabulary[word] = WordLearning(
+                        word=data['word'],
+                        first_seen=datetime.fromisoformat(data['first_seen']),
+                        times_studied=data['times_studied'],
+                        confidence_level=data['confidence_level'],
+                        translations_learned=data['translations_learned'],
+                        last_studied=datetime.fromisoformat(data['last_studied']),
+                        mastery_level=data['mastery_level']
+                    )
+                
+                self.logger.info(f"📖 Loaded progress for {len(self.vocabulary)} words")
+            else:
+                self.logger.info("📝 Starting fresh learning journey")
                 
         except Exception as e:
-            self.logger.error(f"Failed to connect to Ollama: {e}")
-            self.is_available = False
-            return False
+            self.logger.warning(f"Could not load progress: {e}")
     
-    async def analyze_word(self, word: str) -> AnalysisResult:
-        """Analyze Hebrew word using Ollama"""
-        if not self.is_available:
-            raise RuntimeError("Ollama analyzer not initialized")
-        
+    async def study_verse(self, book: str, chapter: int, verse: int) -> Optional[VerseStudy]:
+        """Study a specific verse with AI analysis"""
         try:
-            import requests
+            self.logger.info(f"📖 Studying {book} {chapter}:{verse}")
             
-            prompt = f"""
-            Please analyze this Hebrew word: {word}
+            # Get verse data
+            verse_data = self._get_verse_data(book, chapter, verse)
+            if not verse_data:
+                return None
             
-            Provide:
-            1. English translation
-            2. Grammar information
-            3. Biblical context if applicable
-            4. Pronunciation guide
+            hebrew_words = verse_data.get('text', [])
+            if not hebrew_words:
+                self.logger.warning("No Hebrew text found for this verse")
+                return None
             
-            Be educational and encouraging for a Hebrew learner.
-            """
+            # Analyze each word
+            analysis_results = []
+            words_learned = []
             
-            payload = {
-                "model": self.model_name,
-                "prompt": prompt,
-                "stream": False
+            for word in hebrew_words:
+                # Clean the word (remove punctuation for analysis)
+                clean_word = self._clean_hebrew_word(word)
+                if not clean_word:
+                    continue
+                
+                # Get analysis from available analyzers
+                word_analysis = await self._analyze_word_with_available_models(clean_word)
+                if word_analysis:
+                    analysis_results.extend(word_analysis)
+                    words_learned.append(clean_word)
+                    
+                    # Update vocabulary tracking
+                    await self._update_word_learning(clean_word, word_analysis[0])
+            
+            # Create verse study record
+            verse_study = VerseStudy(
+                book=book,
+                chapter=chapter,
+                verse=verse,
+                hebrew_text=hebrew_words,
+                analysis_results=analysis_results,
+                study_time=datetime.now(),
+                words_learned=words_learned,
+                session_notes=f"Studied {len(words_learned)} words"
+            )
+            
+            self.study_history.append(verse_study)
+            self.verses_studied_today += 1
+            self.words_studied_today += len(words_learned)
+            
+            self.logger.info(f"✅ Completed study of {book} {chapter}:{verse}")
+            return verse_study
+            
+        except Exception as e:
+            self.logger.error(f"Error studying verse: {e}")
+            return None
+    
+    def _get_verse_data(self, book: str, chapter: int, verse: int) -> Optional[Dict]:
+        """Get specific verse data from Tanakh"""
+        try:
+            book_data = self.tanakh_data.get(book)
+            if not book_data:
+                available_books = list(self.tanakh_data.keys())[:5]  # Show first 5
+                self.logger.error(f"Book '{book}' not found. Available: {available_books}...")
+                return None
+            
+            # Handle the actual data structure: book_data is an array of chapters
+            if not isinstance(book_data, list):
+                self.logger.error(f"Unexpected book data structure for {book}")
+                return None
+                
+            if chapter > len(book_data) or chapter < 1:
+                self.logger.error(f"Chapter {chapter} not found in {book} (has {len(book_data)} chapters)")
+                return None
+            
+            chapter_data = book_data[chapter - 1]  # Arrays are 0-indexed
+            if not isinstance(chapter_data, list):
+                self.logger.error(f"Unexpected chapter data structure")
+                return None
+                
+            if verse > len(chapter_data) or verse < 1:
+                self.logger.error(f"Verse {verse} not found in {book} {chapter} (has {len(chapter_data)} verses)")
+                return None
+            
+            verse_data = chapter_data[verse - 1]  # Arrays are 0-indexed
+            if not isinstance(verse_data, list):
+                self.logger.error(f"Unexpected verse data structure")
+                return None
+            
+            # Return in the expected format
+            return {
+                "text": verse_data,
+                "book": book,
+                "chapter": chapter, 
+                "verse": verse
             }
             
-            response = requests.post(
-                f"{self.base_url}/api/generate",
-                json=payload,
-                timeout=60
-            )
+        except Exception as e:
+            self.logger.error(f"Error getting verse data: {e}")
+            return None
+    
+    def _clean_hebrew_word(self, word: str) -> str:
+        """Clean Hebrew word for analysis"""
+        # Remove common punctuation but keep Hebrew text and nikkud
+        import re
+        # Keep Hebrew letters, nikkud (diacritics), and basic punctuation
+        cleaned = re.sub(r'[^\u0590-\u05FF\u0600-\u06FF]', '', word)
+        return cleaned.strip()
+    
+    async def _analyze_word_with_available_models(self, word: str) -> List[AnalysisResult]:
+        """Analyze word with all available models"""
+        results = []
+        
+        for analyzer in self.available_analyzers:
+            try:
+                result = await analyzer.analyze_word(word)
+                results.append(result)
+            except Exception as e:
+                self.logger.warning(f"Analysis failed with {analyzer.name}: {e}")
+        
+        return results
+    
+    async def _update_word_learning(self, word: str, analysis: AnalysisResult):
+        """Update learning progress for a word"""
+        now = datetime.now()
+        
+        if word in self.vocabulary:
+            # Update existing word
+            word_learning = self.vocabulary[word]
+            word_learning.times_studied += 1
+            word_learning.last_studied = now
+            word_learning.confidence_level = min(1.0, word_learning.confidence_level + 0.1)
             
-            if response.status_code == 200:
-                result = response.json()
-                analysis_text = result.get('response', 'No analysis available')
-                
-                analysis = AnalysisResult(
-                    word=word,
-                    translation=f"Educational analysis: {analysis_text[:100]}...",
-                    grammar_info={
-                        "full_analysis": analysis_text,
-                        "educational_focus": True,
-                        "model_type": "conversational"
-                    },
-                    confidence=0.75,
-                    model_used="Ollama-Llama3",
-                    timestamp=datetime.now()
-                )
-                
-                self.analysis_count += 1
-                return analysis
-            else:
-                raise Exception(f"Ollama API error: {response.status_code}")
-                
+            # Update mastery level
+            if word_learning.times_studied >= 10:
+                word_learning.mastery_level = "mastered"
+            elif word_learning.times_studied >= 5:
+                word_learning.mastery_level = "advanced"
+            elif word_learning.times_studied >= 3:
+                word_learning.mastery_level = "intermediate"
+        else:
+            # New word
+            self.vocabulary[word] = WordLearning(
+                word=word,
+                first_seen=now,
+                times_studied=1,
+                confidence_level=0.2,
+                translations_learned=[analysis.translation],
+                last_studied=now,
+                mastery_level="beginner"
+            )
+    
+    def get_session_stats(self) -> Dict[str, Any]:
+        """Get current session statistics"""
+        return {
+            "session_duration": str(datetime.now() - self.session_start),
+            "verses_studied_today": self.verses_studied_today,
+            "words_studied_today": self.words_studied_today,
+            "total_vocabulary": len(self.vocabulary),
+            "available_analyzers": [a.name for a in self.available_analyzers],
+            "mastery_distribution": self._get_mastery_distribution()
+        }
+    
+    def _get_mastery_distribution(self) -> Dict[str, int]:
+        """Get distribution of word mastery levels"""
+        distribution = {"beginner": 0, "intermediate": 0, "advanced": 0, "mastered": 0}
+        for word_learning in self.vocabulary.values():
+            distribution[word_learning.mastery_level] += 1
+        return distribution
+    
+    async def save_progress(self):
+        """Save learning progress to file"""
+        try:
+            # Ensure progress directory exists
+            self.progress_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Convert vocabulary to serializable format
+            vocabulary_data = {}
+            for word, learning in self.vocabulary.items():
+                vocabulary_data[word] = {
+                    "word": learning.word,
+                    "first_seen": learning.first_seen.isoformat(),
+                    "times_studied": learning.times_studied,
+                    "confidence_level": learning.confidence_level,
+                    "translations_learned": learning.translations_learned,
+                    "last_studied": learning.last_studied.isoformat(),
+                    "mastery_level": learning.mastery_level
+                }
+            
+            progress_data = {
+                "vocabulary": vocabulary_data,
+                "last_saved": datetime.now().isoformat(),
+                "session_stats": self.get_session_stats()
+            }
+            
+            with open(self.progress_path, 'w', encoding='utf-8') as f:
+                json.dump(progress_data, f, ensure_ascii=False, indent=2)
+            
+            self.logger.info(f"💾 Progress saved: {len(self.vocabulary)} words")
+            
         except Exception as e:
-            self.logger.error(f"Error analyzing word '{word}' with Ollama: {e}")
-            raise
+            self.logger.error(f"Failed to save progress: {e}")
 
 
-# Quick test function
-async def test_analyzers():
-    """Test both analyzers with a Hebrew word"""
-    print("🧪 Testing Hebrew Analyzers...")
+# Demo function to test the system
+async def demo_learning_session():
+    """Demonstrate the Tanakh learning system"""
+    print("🎓 Starting Tanakh Learning Session Demo...")
     
-    # Test AlephBERT
-    aleph = AlephBertAnalyzer()
-    if aleph.initialize():
-        print("✅ AlephBERT initialized successfully")
-        try:
-            result = await aleph.analyze_word("בְּרֵאשִׁית")
-            print(f"✅ AlephBERT analysis: {result.word} -> {result.confidence}")
-        except Exception as e:
-            print(f"❌ AlephBERT analysis failed: {e}")
-    else:
-        print("❌ AlephBERT initialization failed")
+    # Create and initialize session
+    session = TanakhLearningSession()
+    if not await session.initialize():
+        print("❌ Failed to initialize session")
+        return
     
-    # Test Ollama
-    ollama = OllamaAnalyzer()
-    if ollama.initialize():
-        print("✅ Ollama initialized successfully")
-        try:
-            result = await ollama.analyze_word("בְּרֵאשִׁית")
-            print(f"✅ Ollama analysis: {result.word} -> {result.confidence}")
-        except Exception as e:
-            print(f"❌ Ollama analysis failed: {e}")
-    else:
-        print("❌ Ollama initialization failed")
+    # Study Genesis 1:1
+    print("\n📖 Studying Genesis 1:1...")
+    verse_study = await session.study_verse("Gen", 1, 1)
+    
+    if verse_study:
+        print(f"✅ Studied verse with {len(verse_study.words_learned)} words")
+        print(f"📊 Analysis results: {len(verse_study.analysis_results)}")
+        
+        # Show some results
+        for i, result in enumerate(verse_study.analysis_results[:3]):  # First 3 words
+            print(f"  Word {i+1}: {result.word} -> {result.model_used}")
+    
+    # Show session statistics
+    print("\n📊 Session Statistics:")
+    stats = session.get_session_stats()
+    for key, value in stats.items():
+        print(f"  {key}: {value}")
+    
+    # Save progress
+    await session.save_progress()
+    print("\n💾 Progress saved!")
 
 
 if __name__ == "__main__":
-    # Run the test
-    asyncio.run(test_analyzers())
+    # Run the demo
+    asyncio.run(demo_learning_session())

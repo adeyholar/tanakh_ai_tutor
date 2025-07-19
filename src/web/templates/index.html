@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">🔯 Hebrew AI Learning Platform</h1>
+            <p class="lead">Professional Biblical Hebrew learning powered by Enhanced AlephBERT AI.</p>
+            <hr class="my-4">
+            <p>Study the Hebrew Bible with advanced AI assistance and track your progress.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h4 class="card-title">🔍 Word Analysis</h4>
+                <p class="card-text">Analyze Hebrew words with Enhanced AlephBERT for grammar, roots, and Biblical context.</p>
+                <a href="/analyze" class="btn btn-primary">Start Analyzing</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h4 class="card-title">📖 Verse Study</h4>
+                <p class="card-text">Study Biblical verses with word-by-word AI analysis.</p>
+                <a href="/study" class="btn btn-success">Study Verses</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h4 class="card-title">📊 Progress</h4>
+                <p class="card-text">Track vocabulary progress and get personalized recommendations.</p>
+                <a href="/progress" class="btn btn-info">View Progress</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="alert alert-success">
+            <h5>🚀 System Status</h5>
+            <ul class="mb-0">
+                <li>✅ Enhanced AlephBERT ready (GPU accelerated)</li>
+                <li>✅ Database initialized with progress tracking</li>
+                <li>✅ Complete Tanakh loaded (39 books)</li>
+                <li>✅ REST API available at /api/docs</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-12"><h2>📊 Learning Progress</h2></div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><h5>Load Progress</h5></div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="user_id_lookup" value="demo_user" placeholder="User ID">
+                </div>
+                <button class="btn btn-primary" onclick="loadUserStats()">📊 Load My Progress</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card" id="statsCard" style="display: none;">
+            <div class="card-header"><h5>📈 Statistics</h5></div>
+            <div class="card-body" id="statsContent"></div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h5>💡 Progress Tracking</h5>
+            <p>Your learning progress is automatically tracked as you use the platform. Use the API endpoints to access detailed analytics.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadUserStats() {
+    const userId = document.getElementById('user_id_lookup').value;
+    try {
+        const response = await fetch(`/api/user/${userId}/stats`);
+        if (response.ok) {
+            const stats = await response.json();
+            document.getElementById('statsContent').innerHTML = `
+                <p><strong>Total Vocabulary:</strong> ${stats.total_vocabulary}</p>
+                <p><strong>Mastered Words:</strong> ${stats.mastered_words}</p>
+                <p><strong>Study Streak:</strong> ${stats.study_streak} days</p>
+            `;
+            document.getElementById('statsCard').style.display = 'block';
+        }
+    } catch (error) {
+        alert('Error loading stats: ' + error.message);
+    }
+}
+</script>
+{% endblock %}

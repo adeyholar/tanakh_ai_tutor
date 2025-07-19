@@ -1,1 +1,1 @@
-# Hebrew AI Package
+# Hebrew AI Core Module

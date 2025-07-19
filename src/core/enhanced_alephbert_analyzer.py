@@ -14,7 +14,7 @@ import re
 import json
 from pathlib import Path
 
-from hebrew_analyzers import HebrewAnalyzer, AnalysisResult
+from src.core.hebrew_analyzers import HebrewAnalyzer, AnalysisResult
 
 class EnhancedAlephBertAnalyzer(HebrewAnalyzer):
     """Enhanced AlephBERT with real Hebrew grammar analysis"""
