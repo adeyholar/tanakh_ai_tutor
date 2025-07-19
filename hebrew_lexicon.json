@@ -1,0 +1,86 @@
+{
+  "בְּרֵאשִׁית": {
+    "english": "in the beginning",
+    "root": "ראש",
+    "meaning": "head, beginning, first",
+    "part_of_speech": "noun",
+    "frequency": "high",
+    "pronunciation": "be-re-SHEET",
+    "grammar_notes": "construct state with preposition",
+    "first_occurrence": "Genesis 1:1",
+    "related_words": [
+      "רֹאשׁ",
+      "רִאשׁוֹן"
+    ]
+  },
+  "בָּרָא": {
+    "english": "he created",
+    "root": "ברא",
+    "meaning": "to create, make",
+    "part_of_speech": "verb",
+    "frequency": "medium",
+    "pronunciation": "ba-RA",
+    "grammar_notes": "Qal perfect 3rd person masculine singular",
+    "first_occurrence": "Genesis 1:1",
+    "related_words": [
+      "בְּרִיאָה",
+      "בָּרִיא"
+    ]
+  },
+  "אֱלֹהִים": {
+    "english": "God",
+    "root": "אלה",
+    "meaning": "God, gods, divine beings",
+    "part_of_speech": "noun",
+    "frequency": "very_high",
+    "pronunciation": "e-lo-HEEM",
+    "grammar_notes": "plural form but often singular meaning",
+    "first_occurrence": "Genesis 1:1",
+    "related_words": [
+      "אֵל",
+      "אֱלוֹהַּ"
+    ]
+  },
+  "אֵת": {
+    "english": "(direct object marker)",
+    "root": "את",
+    "meaning": "with, sign of direct object",
+    "part_of_speech": "particle",
+    "frequency": "very_high",
+    "pronunciation": "et",
+    "grammar_notes": "definite direct object marker",
+    "first_occurrence": "Genesis 1:1",
+    "related_words": [
+      "אֶת־",
+      "אִתּ"
+    ]
+  },
+  "הַשָּׁמַיִם": {
+    "english": "the heavens",
+    "root": "שמה",
+    "meaning": "heavens, sky",
+    "part_of_speech": "noun",
+    "frequency": "high",
+    "pronunciation": "ha-sha-MA-yim",
+    "grammar_notes": "definite article + dual form",
+    "first_occurrence": "Genesis 1:1",
+    "related_words": [
+      "שָׁמַיִם",
+      "שָׁמֶה"
+    ]
+  },
+  "הָאָרֶץ": {
+    "english": "the earth",
+    "root": "ארץ",
+    "meaning": "earth, land",
+    "part_of_speech": "noun",
+    "frequency": "very_high",
+    "pronunciation": "ha-A-retz",
+    "grammar_notes": "definite article + feminine noun",
+    "first_occurrence": "Genesis 1:1",
+    "related_words": [
+      "אֶרֶץ",
+      "אֲרָצוֹת"
+    ]
+  }
+}
