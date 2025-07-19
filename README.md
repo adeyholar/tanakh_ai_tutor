@@ -1,17 +1,31 @@
-A Python-based Agentic AI to help learn Biblical Hebrew focusing on reading fluency syntax and root word tracking.
+# 🔥 Hebrew AI Tutor - Agentic Hebrew Learning System
 
-# Biblical Hebrew Tanakh AI Tutor
-A Python-based Agentic AI to help learn Biblical Hebrew, focusing on reading fluency, syntax, and root word tracking.
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Development Status](https://img.shields.io/badge/Status-In%20Development-orange.svg)]()
 
-## Setup
-- Python 3.11.9 in Conda environment: `tanakh_ai`
-- VS Code on D:\AI\Gits\tanakh_ai_tutor
-- Git repo synced with https://github.com/adeyholar/tanakh_ai_tutor
-- Script: tanakh_verse_printer.py prints Genesis 1:1 and Deuteronomy 6:4 with RTL support
+An intelligent AI-powered Hebrew learning application featuring:
 
-## Goals
-- Master Biblical Hebrew fluency in Genesis 1 and Deuteronomy 6
-- Capstone (Week 32): Build a tutor with read-along, repeat-after, feedback, BDB integration, and root/suffix toggles
+## 🎯 Features
 
-## Next Steps
-- Week 2: Learn variables and data types to store Hebrew verses
+### 🗣️ **Voice Recognition & Pronunciation Coaching**
+- Real-time Hebrew pronunciation analysis
+- Personalized feedback and correction
+- Progress tracking and improvement suggestions
+
+### 📖 **Interactive Reading System**
+- Word-by-word highlighting during reading
+- AI-guided read-along sessions
+- Adaptive difficulty progression
+
+### 🤖 **HebRabbAI - Tanakh Q&A System**
+- RAG-powered biblical Hebrew questions
+- Contextual explanations and commentary
+- Historical and linguistic insights
+
+### 🧠 **Adaptive Learning Engine**
+- Personalized learning paths
+- Spaced repetition for memorization
+- Performance analytics and insights
+
+## 🏗️ Project Structure

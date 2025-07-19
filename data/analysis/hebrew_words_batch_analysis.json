@@ -1,0 +1,19 @@
+{
+  "batch_analysis": [
+    {
+      "word": "שָׁלוֹם",
+      "ai_analysis": "Here is the analysis of the Hebrew word שָׁלוֹם (shalom):\n\nMeaning: Peace, greeting, farewell | Root: שָׁל (shal) | POS: Noun | Pronunciation: shah-LOHM",
+      "timestamp": "2025-07-19 00:28:00"
+    },
+    {
+      "word": "אֱלֹהִים",
+      "ai_analysis": "Here is the analysis of the Hebrew word אֱלֹהִים:\n\nMeaning: God, gods, or divine beings | Root: אֵל (El) | POS: Noun | Pronunciation: eh-LOH-heem\n\nNote: The pronunciation may vary depending on the specific dialect or accent. This is a common pronunciation in many Jewish traditions and languages.",
+      "timestamp": "2025-07-19 00:28:05"
+    },
+    {
+      "word": "תּוֹרָה",
+      "ai_analysis": "Here is the analysis:\n\nMeaning: Teaching, instruction, or law | Root: תּוֹר (tor) | POS: Noun | Pronunciation: toh-RAH'",
+      "timestamp": "2025-07-19 00:28:09"
+    }
+  ]
+}

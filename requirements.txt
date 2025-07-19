@@ -1,0 +1,33 @@
+# Hebrew AI Tutor Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core Python packages
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+pandas>=2.0.0
+
+# File processing
+json5>=0.9.0
+xmltodict>=0.13.0
+
+# Hebrew text processing
+hebrew-tokenizer>=2.3.0
+transliterate>=1.10.0
+
+# Audio processing (for future weeks)
+# speechrecognition>=3.10.0
+# pydub>=0.25.0
+# pygame>=2.5.0
+
+# AI/ML (for future weeks)  
+# openai>=1.0.0
+# langchain>=0.1.0
+# transformers>=4.30.0
+
+# Web interface (for future weeks)
+# streamlit>=1.28.0
+# flask>=2.3.0
+
+# Development tools
+pytest>=7.4.0
+black>=23.0.0

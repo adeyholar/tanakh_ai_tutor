@@ -1,0 +1,21 @@
+{
+  "session_date": "2025-07-19 00:38:56",
+  "stats": {
+    "words_learned": 1,
+    "verses_studied": 0,
+    "ai_queries": 1,
+    "session_start": "2025-07-19 00:38:56"
+  },
+  "progress_snapshot": {
+    "level": "beginner",
+    "words_mastered": [
+      "קְטוּרָֽה"
+    ],
+    "verses_completed": [],
+    "total_study_time": 5,
+    "achievements": [],
+    "current_book": "Genesis",
+    "current_chapter": 1,
+    "current_verse": 1
+  }
+}

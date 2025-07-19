@@ -1,0 +1,19 @@
+{
+  "batch_analysis": [
+    {
+      "word": "שָׁלוֹם",
+      "ai_analysis": "Here is the analysis of the Hebrew word שָׁלוֹם:\n\nMeaning: Peace | Root: של- (shal-) | POS: Noun | Pronunciation: shä-lohm",
+      "timestamp": "2025-07-19 00:21:25"
+    },
+    {
+      "word": "אֱלֹהִים",
+      "ai_analysis": "Here is the analysis of the Hebrew word אֱלֹהִים:\n\nMeaning: God, gods | Root: אֵל (el) | POS: Noun plural | Pronunciation: eh-LOH-heem\n\nNote: The pronunciation is in the International Phonetic Alphabet (IPA) format.",
+      "timestamp": "2025-07-19 00:21:30"
+    },
+    {
+      "word": "תּוֹרָה",
+      "ai_analysis": "Here's the analysis for the Hebrew word תּוֹרָה:\n\nMeaning: Teaching, Law | Root: י-ר-ה | POS: Noun | Pronunciation: toh-ROH-hah",
+      "timestamp": "2025-07-19 00:21:34"
+    }
+  ]
+}

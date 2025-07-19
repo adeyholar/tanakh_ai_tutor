@@ -1,0 +1,23 @@
+{
+  "project": {
+    "name": "Hebrew AI Tutor",
+    "version": "1.0.0",
+    "description": "Agentic AI Hebrew Learning System"
+  },
+  "data_paths": {
+    "tanakh_file": "data/tanakh/hebrew_bible_with_nikkud.json",
+    "lexicon_dir": "data/lexicon/",
+    "audio_dir": "data/audio/",
+    "embeddings_dir": "data/embeddings/"
+  },
+  "ai_settings": {
+    "model_provider": "openai",
+    "embedding_model": "text-embedding-ada-002",
+    "chat_model": "gpt-4"
+  },
+  "learning_settings": {
+    "difficulty_levels": ["beginner", "intermediate", "advanced"],
+    "pronunciation_threshold": 0.85,
+    "progress_save_interval": 300
+  }
+}

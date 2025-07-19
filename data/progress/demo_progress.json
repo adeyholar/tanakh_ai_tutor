@@ -1,0 +1,21 @@
+{
+  "demo_stats": {
+    "words_learned": 2,
+    "verses_studied": 1,
+    "ai_queries": 0,
+    "session_start": "2025-07-19 00:38:19"
+  },
+  "sample_progress": {
+    "level": "beginner",
+    "words_mastered": [
+      "אָדָ֥ם",
+      "שֵׁ֖ת"
+    ],
+    "verses_completed": [],
+    "total_study_time": 0,
+    "achievements": [],
+    "current_book": "Genesis",
+    "current_chapter": 1,
+    "current_verse": 1
+  }
+}
