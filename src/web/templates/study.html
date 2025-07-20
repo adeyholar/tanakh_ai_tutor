@@ -1,399 +1,447 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📖 Biblical Hebrew Verse Study - Hebrew AI Platform</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&display=swap" rel="stylesheet">
-    
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', path='css/hebrew-style.css') }}">
-    
-    <style>
-        /* Additional improvements for Week 4 preview */
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .main-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-            margin: 20px;
-            padding: 30px;
-        }
-        
-        .navbar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-            border: none;
-            border-radius: 10px;
-            padding: 12px 25px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 20px rgba(108, 92, 231, 0.3);
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">
-                <span style="font-size: 1.5em;">✡️</span> Hebrew AI Learning Platform
-            </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/">🏠 Home</a>
-                <a class="nav-link" href="/analyze">🔍 Analyze</a>
-                <a class="nav-link active" href="/study">📖 Study</a>
-                <a class="nav-link" href="/progress">📊 Progress</a>
-                <a class="nav-link" href="/api/docs">📚 API</a>
-            </div>
-        </div>
-    </nav>
+<!-- src/web/templates/study.html -->
+<!-- CORRECTED VERSION - Complete File -->
+<!-- Changes made: Fixed analysis results display and word enumeration -->
+<!-- Original issue: Frontend wasn't properly displaying the analysis results -->
 
-    <div class="container-fluid main-container">
-        <div class="row">
-            <div class="col-12">
-                <h1 class="text-center mb-4" style="color: #2c3e50; font-weight: 700;">
-                    📖 Biblical Hebrew Verse Study
-                </h1>
-                <p class="text-center text-muted mb-5">
-                    Explore the Hebrew Bible with AI-powered analysis and learning insights
+{% extends "base.html" %}
+
+{% block title %}Hebrew Verse Study - Hebrew AI Platform{% endblock %}
+
+{% block extra_head %}
+<style>
+    .hebrew-text {
+        font-family: 'SBL Hebrew', 'Ezra SIL', 'Taamey David CLM', serif;
+        direction: rtl;
+        text-align: right;
+        font-size: 1.4em;
+        line-height: 1.6;
+    }
+    
+    .word-analysis {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 10px 0;
+        background: #f8f9fa;
+    }
+    
+    .confidence-high { background-color: #d4edda; }
+    .confidence-medium { background-color: #fff3cd; }
+    .confidence-low { background-color: #f8d7da; }
+    
+    .grammar-detail {
+        font-size: 0.9em;
+        color: #6c757d;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .book-select {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .verse-input-group {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .analysis-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid #007bff;
+    }
+    
+    .analysis-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="display-4 mb-3">📖 Hebrew Verse Study</h1>
+                <p class="lead text-muted">
+                    Study Biblical Hebrew verses word-by-word with AI-powered analysis
                 </p>
             </div>
-        </div>
 
-        <div class="row">
-            <div class="col-lg-5 mb-4">
-                <div class="card">
-                    <div class="card-header" style="background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white;">
-                        <h5 class="mb-0">📚 Select Verse</h5>
+            <!-- Verse Selection Form -->
+            <div class="verse-input-group mb-5">
+                <h3 class="mb-4 text-center">🎯 Select a Verse to Study</h3>
+                
+                <form id="verseStudyForm" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="bookSelect" class="form-label fw-bold">📚 Book</label>
+                        <select class="form-select" id="bookSelect" required>
+                            <option value="">Choose a book...</option>
+                            <optgroup label="Torah (תורה)">
+                                <option value="Gen">Genesis (בראשית)</option>
+                                <option value="Exod">Exodus (שמות)</option>
+                                <option value="Lev">Leviticus (ויקרא)</option>
+                                <option value="Num">Numbers (במדבר)</option>
+                                <option value="Deut">Deuteronomy (דברים)</option>
+                            </optgroup>
+                            <optgroup label="Nevi'im (נביאים)">
+                                <option value="Josh">Joshua (יהושע)</option>
+                                <option value="Judg">Judges (שופטים)</option>
+                                <option value="1Sam">1 Samuel (שמואל א)</option>
+                                <option value="2Sam">2 Samuel (שמואל ב)</option>
+                                <option value="1Kgs">1 Kings (מלכים א)</option>
+                                <option value="2Kgs">2 Kings (מלכים ב)</option>
+                                <option value="Isa">Isaiah (ישעיהו)</option>
+                                <option value="Jer">Jeremiah (ירמיהו)</option>
+                                <option value="Ezek">Ezekiel (יחזקאל)</option>
+                                <option value="Hos">Hosea (הושע)</option>
+                                <option value="Joel">Joel (יואל)</option>
+                                <option value="Amos">Amos (עמוס)</option>
+                                <option value="Obad">Obadiah (עובדיה)</option>
+                                <option value="Jonah">Jonah (יונה)</option>
+                                <option value="Mic">Micah (מיכה)</option>
+                                <option value="Nah">Nahum (נחום)</option>
+                                <option value="Hab">Habakkuk (חבקוק)</option>
+                                <option value="Zeph">Zephaniah (צפניה)</option>
+                                <option value="Hag">Haggai (חגי)</option>
+                                <option value="Zech">Zechariah (זכריה)</option>
+                                <option value="Mal">Malachi (מלאכי)</option>
+                            </optgroup>
+                            <optgroup label="Ketuvim (כתובים)">
+                                <option value="Ps">Psalms (תהלים)</option>
+                                <option value="Prov">Proverbs (משלי)</option>
+                                <option value="Job">Job (איוב)</option>
+                                <option value="Song">Song of Songs (שיר השירים)</option>
+                                <option value="Ruth">Ruth (רות)</option>
+                                <option value="Lam">Lamentations (איכה)</option>
+                                <option value="Eccl">Ecclesiastes (קהלת)</option>
+                                <option value="Esth">Esther (אסתר)</option>
+                                <option value="Dan">Daniel (דניאל)</option>
+                                <option value="Ezra">Ezra (עזרא)</option>
+                                <option value="Neh">Nehemiah (נחמיה)</option>
+                                <option value="1Chr">1 Chronicles (דברי הימים א)</option>
+                                <option value="2Chr">2 Chronicles (דברי הימים ב)</option>
+                            </optgroup>
+                        </select>
                     </div>
-                    <div class="card-body">
-                        <form action="/study-verse-form" method="post" id="verseForm">
-                            <div class="mb-3">
-                                <label for="book" class="form-label">Book:</label>
-                                <select name="book" id="book" class="form-select" required>
-                                    <option value="">בחר ספר / Select Book</option>
-                                    </select>
-                            </div>
+                    
+                    <div class="col-md-3">
+                        <label for="chapterInput" class="form-label fw-bold">📑 Chapter</label>
+                        <input type="number" class="form-control" id="chapterInput" 
+                               placeholder="1" min="1" required>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="verseInput" class="form-label fw-bold">📝 Verse</label>
+                        <input type="number" class="form-control" id="verseInput" 
+                               placeholder="1" min="1" required>
+                    </div>
+                    
+                    <div class="col-12 text-center">
+                        <button type="submit" class="btn btn-primary btn-lg px-5 py-3">
+                            <i class="bi bi-search"></i> Study This Verse
+                        </button>
+                    </div>
+                </form>
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="chapter" class="form-label">Chapter:</label>
-                                    <input type="number" name="chapter" id="chapter" 
-                                            class="form-control" min="1" value="1" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="verse" class="form-label">Verse:</label>
-                                    <input type="number" name="verse" id="verse" 
-                                            class="form-control" min="1" value="1" required>
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary w-100">
-                                🔍 Study Verse with AI Analysis
+                <!-- Quick Access Examples -->
+                <div class="mt-4">
+                    <h6 class="text-muted mb-3">🌟 Quick Examples:</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-secondary btn-sm w-100 quick-verse" 
+                                    data-book="Gen" data-chapter="1" data-verse="1">
+                                Genesis 1:1 - Creation
                             </button>
-                        </form>
-
-                        <div class="mt-3">
-                            <h6>🚀 Quick Access:</h6>
-                            <div class="d-flex flex-wrap gap-2">
-                                <button class="btn btn-outline-primary btn-sm" onclick="loadVerse('genesis', 1, 1)">
-                                    Gen 1:1
-                                </button>
-                                <button class="btn btn-outline-primary btn-sm" onclick="loadVerse('psalms', 23, 1)">
-                                    Ps 23:1
-                                </button>
-                                <button class="btn btn-outline-primary btn-sm" onclick="loadVerse('isaiah', 40, 3)">
-                                    Isa 40:3
-                                </button>
-                                <button class="btn btn-outline-primary btn-sm" onclick="loadVerse('john', 1, 1)">
-                                    Random
-                                </button>
-                            </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="card mt-3">
-                    <div class="card-header" style="background: linear-gradient(135deg, #00b894, #00cec9); color: white;">
-                        <h6 class="mb-0">⚡ System Status</h6>
-                    </div>
-                    <div class="card-body p-3">
-                        <div id="system-status">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span>🤖 AlephBERT AI:</span>
-                                <span class="badge bg-success">Ready</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span>🦙 Ollama Llama3:</span>
-                                <span class="badge bg-warning" id="ollama-badge">Checking...</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span>📊 Database:</span>
-                                <span class="badge bg-success">Connected</span>
-                            </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-secondary btn-sm w-100 quick-verse"
+                                    data-book="Ps" data-chapter="23" data-verse="1">
+                                Psalm 23:1 - The Lord is my shepherd
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-outline-secondary btn-sm w-100 quick-verse"
+                                    data-book="Isa" data-chapter="40" data-verse="3">
+                                Isaiah 40:3 - Voice in wilderness
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-lg-7">
-                <div class="card">
-                    <div class="card-header" style="background: linear-gradient(135deg, #e17055, #fd79a8); color: white;">
-                        <h5 class="mb-0">📖 Study Results</h5>
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="loading-spinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">🤖 AI is analyzing the Hebrew text...</p>
+            </div>
+
+            <!-- Results Display -->
+            <div id="verseResults" class="mt-4" style="display: none;">
+                <div class="alert alert-success">
+                    <h5>📖 Verse Analysis Complete!</h5>
+                    <div id="verseText" class="hebrew-text mb-3"></div>
+                    
+                    <!-- Word-by-word analysis accordion -->
+                    <div class="accordion" id="wordAnalysisAccordion">
+                        <!-- Words will be dynamically inserted here -->
                     </div>
-                    <div class="card-body">
-                        {% if verse_data %}
-                        <div class="text-center mb-4">
-                            <h3 style="color: #2c3e50; font-weight: 600;">
-                                {{ verse_data.book }} {{ verse_data.chapter }}:{{ verse_data.verse }}
-                            </h3>
-                        </div>
-
-                        <div class="hebrew-verse-display text-center mb-4">
-                            {{ verse_data.hebrew_text }}
-                        </div>
-
-                        <div class="row mb-4">
-                            <div class="col-md-4">
-                                <div class="text-center p-3" style="background: linear-gradient(135deg, #74b9ff, #0984e3); color: white; border-radius: 10px;">
-                                    <h4 class="mb-1">{{ verse_data.words_analyzed }}</h4>
-                                    <small>Words Analyzed</small>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="text-center p-3" style="background: linear-gradient(135deg, #fd79a8, #e84393); color: white; border-radius: 10px;">
-                                    <h4 class="mb-1">{{ verse_data.analysis_results|length }}</h4>
-                                    <small>Analysis Results</small>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="text-center p-3" style="background: linear-gradient(135deg, #55efc4, #00b894); color: white; border-radius: 10px;">
-                                    <h4 class="mb-1">High</h4>
-                                    <small>AI Confidence</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="analysis-section">
-                            <h5 class="mb-3" style="color: #2c3e50;">
-                                🔬 Word-by-Word Analysis
-                            </h5>
-                            
-                            {% if verse_data.analysis_results %}
-                            <div class="accordion" id="analysisAccordion">
-                                {# Loop directly over analysis items, which now include 'index' #}
-                                {% for analysis in verse_data.analysis_results %}
-                                <div class="accordion-item mb-2" style="border-radius: 10px; overflow: hidden;">
-                                    <h2 class="accordion-header">
-                                        <button class="accordion-button {% if analysis.index != 0 %}collapsed{% endif %}" 
-                                                type="button" data-bs-toggle="collapse" 
-                                                data-bs-target="#collapse{{ analysis.index }}" {# Use analysis.index here #}
-                                                aria-expanded="{% if analysis.index == 0 %}true{% else %}false{% endif %}"
-                                                aria-controls="collapse{{ analysis.index }}"
-                                                style="background: linear-gradient(135deg, #a29bfe, #6c5ce7); color: white; font-weight: 600;">
-                                            <span class="hebrew-text me-3" style="font-size: 18px;">
-                                                {{ analysis.word }}
-                                            </span>
-                                            <span class="badge bg-light text-dark me-2">
-                                                {{ analysis.translation }}
-                                            </span>
-                                            {% if analysis.confidence %}
-                                            <span class="badge bg-success">
-                                                {{ (analysis.confidence * 100)|round }}% confident
-                                            </span>
-                                            {% endif %}
-                                        </button>
-                                    </h2>
-                                    <div id="collapse{{ analysis.index }}" {# Use analysis.index here #}
-                                            class="accordion-collapse collapse {% if analysis.index == 0 %}show{% endif %}" 
-                                            data-bs-parent="#analysisAccordion">
-                                        <div class="accordion-body">
-                                            {% if analysis.grammar_info %}
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <h6 style="color: #6c5ce7;">📝 Grammar Analysis:</h6>
-                                                    <ul class="list-unstyled">
-                                                        {% if analysis.grammar_info.hebrew_root %}
-                                                        <li><strong>Root:</strong> 
-                                                            <span class="hebrew-text">{{ analysis.grammar_info.hebrew_root }}</span>
-                                                        </li>
-                                                        {% endif %}
-                                                        {% if analysis.grammar_info.word_type %}
-                                                        <li><strong>Type:</strong> {{ analysis.grammar_info.word_type }}</li>
-                                                        {% endif %}
-                                                        {% if analysis.grammar_info.morphological_analysis %}
-                                                        <li><strong>Morphology:</strong> {{ analysis.grammar_info.morphological_analysis }}</li>
-                                                        {% endif %}
-                                                    </ul>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <h6 style="color: #e17055;">🎯 Context & Usage:</h6>
-                                                    <ul class="list-unstyled">
-                                                        {% if analysis.biblical_frequency %}
-                                                        <li><strong>Biblical Frequency:</strong> {{ analysis.biblical_frequency }}</li>
-                                                        {% endif %}
-                                                        {% if analysis.theological_significance %}
-                                                        <li><strong>Significance:</strong> {{ analysis.theological_significance }}</li>
-                                                        {% endif %}
-                                                        <li><strong>Model Used:</strong> 
-                                                            <span class="badge bg-info">{{ analysis.model_used or "Enhanced-AlephBERT" }}</span>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                            {% endif %}
-
-                                            {% if analysis.educational_explanation %}
-                                            <div class="mt-3 p-3" style="background: #f8f9fa; border-radius: 8px; border-left: 4px solid #6c5ce7;">
-                                                <h6 style="color: #2c3e50;">💡 Learning Insight:</h6>
-                                                <p class="mb-0">{{ analysis.educational_explanation }}</p>
-                                            </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                            {% else %}
-                            <div class="alert alert-info">
-                                <strong>ℹ️ No detailed analysis available.</strong> 
-                                The verse was processed but detailed word analysis is not yet available. 
-                                This might be due to Ollama service being offline.
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="mt-4 p-3" style="background: linear-gradient(135deg, #fd79a8, #fdcb6e); border-radius: 15px;">
-                            <h6 style="color: white; margin-bottom: 15px;">📊 Study Session Summary</h6>
-                            <div class="row text-white">
-                                <div class="col-md-3">
-                                    <strong>{{ verse_data.words_analyzed }}</strong><br>
-                                    <small>Words Studied</small>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>{{ verse_data.analysis_results|length }}</strong><br>
-                                    <small>AI Analyses</small>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>AlephBERT</strong><br>
-                                    <small>Primary Model</small>
-                                </div>
-                                <div class="col-md-3">
-                                    <strong>📈</strong><br>
-                                    <small>Progress Saved</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        {% else %}
-                        <div class="text-center py-5">
-                            <div style="font-size: 4em; margin-bottom: 20px;">📖</div>
-                            <h4 style="color: #2c3e50;">Welcome to Biblical Hebrew Study</h4>
-                            <p class="text-muted mb-4">
-                                Select a book, chapter, and verse from the left panel to begin your AI-powered Hebrew study session.
-                            </p>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="p-3" style="background: linear-gradient(135deg, #74b9ff, #0984e3); color: white; border-radius: 10px; margin-bottom: 15px;">
-                                        <h5>🤖 AI Analysis</h5>
-                                        <small>Enhanced AlephBERT provides specialized Biblical Hebrew analysis</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="p-3" style="background: linear-gradient(135deg, #fd79a8, #e84393); color: white; border-radius: 10px; margin-bottom: 15px;">
-                                        <h5>📚 Complete Tanakh</h5>
-                                        <small>All 39 books of the Hebrew Bible available for study</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="p-3" style="background: linear-gradient(135deg, #55efc4, #00b894); color: white; border-radius: 10px; margin-bottom: 15px;">
-                                        <h5>📊 Progress Tracking</h5>
-                                        <small>Your vocabulary and learning progress is automatically saved</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
+                    
+                    <!-- Study statistics -->
+                    <div class="mt-3 p-3 bg-light rounded">
+                        <h6>📊 Study Session Statistics:</h6>
+                        <ul class="mb-0">
+                            <li><strong>Words Analyzed:</strong> <span id="wordsCount"></span></li>
+                            <li><strong>Study Time:</strong> <span id="studyTime"></span></li>
+                            <li><strong>Average Confidence:</strong> <span id="avgConfidence"></span></li>
+                        </ul>
                     </div>
                 </div>
+            </div>
+
+            <!-- Error Display -->
+            <div id="errorDisplay" class="alert alert-danger" style="display: none;">
+                <h5>❌ Analysis Error</h5>
+                <p id="errorMessage"></p>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Hebrew Verse Study JavaScript Functions
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize event listeners
+    initializeEventListeners();
+});
+
+function initializeEventListeners() {
+    // Form submission
+    document.getElementById('verseStudyForm').addEventListener('submit', handleVerseStudy);
     
-    <script src="{{ url_for('static', path='js/hebrew-helpers.js') }}"></script>
-    
-    <script>
-        // Quick verse loading function
-        function loadVerse(book, chapter, verse) {
-            document.getElementById('book').value = book;
-            document.getElementById('chapter').value = chapter;
-            document.getElementById('verse').value = verse;
-            document.getElementById('verseForm').submit();
-        }
-        
-        // Check Ollama status
-        async function checkOllamaStatus() {
-            try {
-                const response = await fetch('/api/health');
-                const health = await response.json();
-                const ollamaBadge = document.getElementById('ollama-badge');
-                
-                if (health.components && health.components.ollama) {
-                    ollamaBadge.textContent = 'Online';
-                    ollamaBadge.className = 'badge bg-success';
-                } else {
-                    ollamaBadge.textContent = 'Offline';
-                    ollamaBadge.className = 'badge bg-danger';
-                }
-            } catch (error) {
-                const ollamaBadge = document.getElementById('ollama-badge');
-                ollamaBadge.textContent = 'Error';
-                ollamaBadge.className = 'badge bg-danger';
-            }
-        }
-        
-        // Check status on page load and every 30 seconds
-        checkOllamaStatus();
-        setInterval(checkOllamaStatus, 30000);
-        
-        // Add smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
+    // Quick verse buttons
+    document.querySelectorAll('.quick-verse').forEach(button => {
+        button.addEventListener('click', function() {
+            const book = this.dataset.book;
+            const chapter = this.dataset.chapter;
+            const verse = this.dataset.verse;
+            
+            // Fill form fields
+            document.getElementById('bookSelect').value = book;
+            document.getElementById('chapterInput').value = chapter;
+            document.getElementById('verseInput').value = verse;
+            
+            // Trigger study
+            studyVerse(book, parseInt(chapter), parseInt(verse));
         });
-    </script>
-</body>
-</html>
+    });
+}
+
+async function handleVerseStudy(event) {
+    event.preventDefault();
+    
+    const book = document.getElementById('bookSelect').value;
+    const chapter = parseInt(document.getElementById('chapterInput').value);
+    const verse = parseInt(document.getElementById('verseInput').value);
+    
+    if (!book || !chapter || !verse) {
+        showError('Please fill in all fields');
+        return;
+    }
+    
+    await studyVerse(book, chapter, verse);
+}
+
+async function studyVerse(book, chapter, verse) {
+    try {
+        // Show loading indicator
+        showLoading();
+        hideResults();
+        hideError();
+        
+        console.log(`🔍 Studying ${book} ${chapter}:${verse}`);
+        
+        // Make API request
+        const response = await fetch(`/api/study/${book}/${chapter}/${verse}`);
+        const data = await response.json();
+        
+        console.log('📊 API Response:', data);
+        
+        // Hide loading
+        hideLoading();
+        
+        if (data.success) {
+            displayVerseResults(data);
+        } else {
+            showError(data.error || 'Failed to analyze verse');
+        }
+        
+    } catch (error) {
+        console.error('❌ Study error:', error);
+        hideLoading();
+        showError('Network error: ' + error.message);
+    }
+}
+
+function displayVerseResults(data) {
+    console.log('📊 Displaying verse results:', data);
+    
+    if (!data.success) {
+        showError('Failed to analyze verse: ' + (data.error || 'Unknown error'));
+        return;
+    }
+    
+    // Show the results container
+    const resultsDiv = document.getElementById('verseResults');
+    resultsDiv.style.display = 'block';
+    
+    // Display Hebrew text
+    const verseTextDiv = document.getElementById('verseText');
+    verseTextDiv.innerHTML = `
+        <h4>${data.book} ${data.chapter}:${data.verse}</h4>
+        <p class="fs-3">${data.hebrew_text}</p>
+    `;
+    
+    // Clear previous accordion items
+    const accordion = document.getElementById('wordAnalysisAccordion');
+    accordion.innerHTML = '';
+    
+    // Display each word analysis
+    data.analysis_results.forEach((analysis, index) => {
+        const accordionItem = createWordAccordionItem(analysis, index);
+        accordion.appendChild(accordionItem);
+    });
+    
+    // Update statistics
+    document.getElementById('wordsCount').textContent = data.words_analyzed;
+    document.getElementById('studyTime').textContent = new Date(data.timestamp).toLocaleTimeString();
+    
+    // Calculate average confidence
+    const avgConf = data.analysis_results.reduce((sum, a) => sum + a.confidence, 0) / data.analysis_results.length;
+    document.getElementById('avgConfidence').textContent = (avgConf * 100).toFixed(1) + '%';
+    
+    // Scroll to results
+    resultsDiv.scrollIntoView({ behavior: 'smooth' });
+}
+
+function createWordAccordionItem(analysis, index) {
+    const item = document.createElement('div');
+    item.className = 'accordion-item';
+    
+    // Get confidence color
+    const confidenceColor = analysis.confidence >= 0.8 ? 'success' : 
+                           analysis.confidence >= 0.6 ? 'warning' : 'danger';
+    
+    item.innerHTML = `
+        <h2 class="accordion-header" id="heading${index}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                    data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
+                <span class="hebrew-text fs-4 me-3">${analysis.word}</span>
+                <span class="badge bg-${confidenceColor} me-2">${(analysis.confidence * 100).toFixed(0)}%</span>
+                <span class="text-muted">${analysis.translation}</span>
+            </button>
+        </h2>
+        <div id="collapse${index}" class="accordion-collapse collapse" 
+             aria-labelledby="heading${index}" data-bs-parent="#wordAnalysisAccordion">
+            <div class="accordion-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>📚 Translation & Meaning:</h6>
+                        <p class="mb-2"><strong>${analysis.translation}</strong></p>
+                        
+                        <h6>🔤 Grammar Analysis:</h6>
+                        <ul class="list-unstyled">
+                            ${analysis.grammar_info.hebrew_root ? 
+                              `<li><strong>Root:</strong> ${analysis.grammar_info.hebrew_root}</li>` : ''}
+                            ${analysis.grammar_info.morphological_analysis ? 
+                              `<li><strong>Structure:</strong> ${analysis.grammar_info.morphological_analysis}</li>` : ''}
+                            ${analysis.grammar_info.word_type ? 
+                              `<li><strong>Type:</strong> ${analysis.grammar_info.word_type}</li>` : ''}
+                            ${analysis.grammar_info.biblical_context ? 
+                              `<li><strong>Context:</strong> ${analysis.grammar_info.biblical_context}</li>` : ''}
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>🤖 AI Analysis Details:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Model:</strong> ${analysis.model_used}</li>
+                            <li><strong>Confidence:</strong> 
+                                <span class="badge bg-${confidenceColor}">${(analysis.confidence * 100).toFixed(1)}%</span>
+                            </li>
+                            <li><strong>Device:</strong> ${analysis.grammar_info.device_used || 'CPU'}</li>
+                            <li><strong>Processing:</strong> ${analysis.grammar_info.processing_time || 'N/A'}</li>
+                        </ul>
+                        
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                Analyzed: ${new Date(analysis.timestamp).toLocaleString()}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return item;
+}
+
+function showLoading() {
+    document.getElementById('loadingIndicator').style.display = 'block';
+}
+
+function hideLoading() {
+    document.getElementById('loadingIndicator').style.display = 'none';
+}
+
+function showResults() {
+    document.getElementById('verseResults').style.display = 'block';
+}
+
+function hideResults() {
+    document.getElementById('verseResults').style.display = 'none';
+}
+
+function showError(message) {
+    document.getElementById('errorMessage').textContent = message;
+    document.getElementById('errorDisplay').style.display = 'block';
+}
+
+function hideError() {
+    document.getElementById('errorDisplay').style.display = 'none';
+}
+
+// Utility function for copying text to clipboard
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Could add a toast notification here
+        console.log('📋 Copied to clipboard:', text);
+    }).catch(err => {
+        console.error('Failed to copy text:', err);
+    });
+}
+
+// Add keyboard shortcuts
+document.addEventListener('keydown', function(event) {
+    // Ctrl/Cmd + Enter to submit form
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+        const form = document.getElementById('verseStudyForm');
+        if (form) {
+            form.dispatchEvent(new Event('submit'));
+        }
+    }
+});
+</script>
+
+{% endblock %}
