@@ -1,42 +1,12 @@
-// App.tsx - Complete Working App with Authentication Integration
+// App.jsx - Updated React App with Authentication Integration
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth, withAuth } from './contexts/AuthContext';
 import { AuthPage, AuthModal, UserProfile } from './components/auth/AuthComponents';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
-// Type definitions for compatibility
-interface User {
-  username?: string;
-  total_study_time?: number;
-  words_learned?: number;
-  learning_level?: string;
-  current_chapter?: number;
-}
-
-interface Book {
-  id: string;
-  name: string;
-  hebrew_name?: string;
-}
-
-interface AnalysisResult {
-  text?: string;
-  word?: string;
-  analysis?: any;
-  user_level?: string;
-  translation?: string;
-  grammar_info?: {
-    hebrew_root?: string;
-    word_type?: string;
-    morphological_analysis?: string;
-  };
-  confidence?: number;
-  model_used?: string;
-}
-
 // Main App Component
-const App: React.FC = () => {
+const App = () => {
   return (
     <AuthProvider>
       <div className="App">
@@ -47,9 +17,9 @@ const App: React.FC = () => {
 };
 
 // App Content with Routing
-const AppContent: React.FC = () => {
+const AppContent = () => {
   const { isAuthenticated, loading } = useAuth();
-  const [currentPage, setCurrentPage] = useState<string>('home');
+  const [currentPage, setCurrentPage] = useState('home');
 
   // Simple hash-based routing
   useEffect(() => {
@@ -105,9 +75,9 @@ const AppContent: React.FC = () => {
 };
 
 // Navigation Bar Component
-const Navbar: React.FC = () => {
+const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
-  const [showProfile, setShowProfile] = useState<boolean>(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -207,7 +177,7 @@ const Navbar: React.FC = () => {
 };
 
 // Home Page Component
-const HomePage: React.FC = () => {
+const HomePage = () => {
   const { isAuthenticated, user } = useAuth();
 
   return (
@@ -266,335 +236,79 @@ const HomePage: React.FC = () => {
               </div>
             </div>
           ) : (
-            // Public Home Page - Your Original Working Hebrew AI Interface
-            <PublicHomePage />
+            // Public Home Page
+            <div className="text-center">
+              <h1 className="display-4 mb-4">
+                Hebrew AI Learning Platform 🎯
+              </h1>
+              <p className="lead mb-4">
+                Master Biblical Hebrew with AI-powered analysis and personalized learning
+              </p>
+              
+              <div className="row mb-5">
+                <div className="col-md-4 mb-3">
+                  <div className="card h-100">
+                    <div className="card-body text-center">
+                      <i className="bi bi-cpu display-4 text-primary mb-3"></i>
+                      <h5>AI-Powered Analysis</h5>
+                      <p>Advanced AlephBERT + Llama 3 hybrid intelligence for accurate Biblical Hebrew understanding</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-4 mb-3">
+                  <div className="card h-100">
+                    <div className="card-body text-center">
+                      <i className="bi bi-book display-4 text-success mb-3"></i>
+                      <h5>Complete Hebrew Bible</h5>
+                      <p>Full Tanakh with all 39 books, chapters, and verses with cantillation marks</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-4 mb-3">
+                  <div className="card h-100">
+                    <div className="card-body text-center">
+                      <i className="bi bi-graph-up display-4 text-info mb-3"></i>
+                      <h5>Progress Tracking</h5>
+                      <p>Personal dashboard to monitor your learning journey and vocabulary growth</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="d-grid gap-2 d-md-block">
+                <a href="#register" className="btn btn-primary btn-lg me-md-2">
+                  <i className="bi bi-person-plus me-2"></i>
+                  Start Learning
+                </a>
+                <a href="#login" className="btn btn-outline-primary btn-lg">
+                  <i className="bi bi-box-arrow-in-right me-2"></i>
+                  Login
+                </a>
+              </div>
+
+              <div className="mt-5 p-4 bg-light rounded">
+                <h4>🚀 Platform Features</h4>
+                <div className="row text-start">
+                  <div className="col-md-6">
+                    <ul className="list-unstyled">
+                      <li><i className="bi bi-check-circle text-success me-2"></i>Real-time Hebrew text analysis</li>
+                      <li><i className="bi bi-check-circle text-success me-2"></i>Individual word breakdown</li>
+                      <li><i className="bi bi-check-circle text-success me-2"></i>Biblical context explanations</li>
+                      <li><i className="bi bi-check-circle text-success me-2"></i>Pronunciation guides</li>
+                    </ul>
+                  </div>
+                  <div className="col-md-6">
+                    <ul className="list-unstyled">
+                      <li><i className="bi bi-check-circle text-success me-2"></i>Personal progress tracking</li>
+                      <li><i className="bi bi-check-circle text-success me-2"></i>Study session management</li>
+                      <li><i className="bi bi-check-circle text-success me-2"></i>Adaptive learning levels</li>
+                      <li><i className="bi bi-check-circle text-success me-2"></i>GPU-accelerated AI processing</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Public Home Page - Restore Your Working Hebrew AI Interface
-const PublicHomePage: React.FC = () => {
-  const [healthStatus, setHealthStatus] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [inputWord, setInputWord] = useState<string>('');
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [analyzing, setAnalyzing] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-  const { user } = useAuth(); // Destructure user from useAuth hook
-
-  useEffect(() => {
-    checkSystemHealth();
-  }, []);
-
-  const checkSystemHealth = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/api/health');
-      const data = await response.json();
-      setHealthStatus(data);
-    } catch (error) {
-      console.error('Health check failed:', error);
-      setHealthStatus({
-        status: 'error',
-        components: {
-          database: 'Connection failed'
-        }
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const analyzeWord = async () => {
-    if (!inputWord.trim()) {
-      setError('Please enter a Hebrew word');
-      return;
-    }
-
-    setAnalyzing(true);
-    setError('');
-
-    try {
-      const response = await fetch('http://localhost:8000/api/analyze-word', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ word: inputWord.trim() }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Analysis failed');
-      }
-
-      const result = await response.json();
-      setAnalysisResult(result);
-    } catch (error) {
-      setError('Analysis failed. Please try again.');
-      console.error('Analysis error:', error);
-    } finally {
-      setAnalyzing(false);
-    }
-  };
-
-  const quickWords = ['בראשית', 'אלהים', 'שלום', 'תורה', 'ישראל'];
-
-  if (loading) {
-    return (
-      <div className="text-center">
-        <div className="spinner-border text-primary mb-3" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <h5>Loading Hebrew AI Platform...</h5>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      {/* Hero Section */}
-      <div className="text-center mb-5">
-        <h1 className="display-4 mb-4">
-          Hebrew AI Learning Platform 🎯
-        </h1>
-        <p className="lead mb-4">
-          Master Biblical Hebrew with AI-powered analysis and personalized learning
-        </p>
-      </div>
-
-      {/* System Status */}
-      <div className="row mb-5">
-        <div className="col-12">
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">🖥️ System Status</h5>
-            </div>
-            <div className="card-body">
-              <div className="row text-center">
-                <div className="col-md-3 mb-3">
-                  <div className={`p-3 rounded ${healthStatus?.status === 'healthy' ? 'bg-success' : 'bg-danger'} text-white`}>
-                    <h6>Backend API</h6>
-                    <p className="mb-0">{healthStatus?.status === 'healthy' ? '✅ Connected' : '❌ Offline'}</p>
-                  </div>
-                </div>
-                <div className="col-md-3 mb-3">
-                  <div className={`p-3 rounded ${healthStatus?.components?.database === 'Connected' ? 'bg-success' : 'bg-warning'} text-white`}>
-                    <h6>Database</h6>
-                    <p className="mb-0">{healthStatus?.components?.database === 'Connected' ? '✅ Ready' : '⚠️ Loading'}</p>
-                  </div>
-                </div>
-                <div className="col-md-3 mb-3">
-                  <div className={`p-3 rounded ${healthStatus?.components?.alephbert ? 'bg-success' : 'bg-warning'} text-white`}>
-                    <h6>AlephBERT AI</h6>
-                    <p className="mb-0">{healthStatus?.components?.alephbert ? '✅ Ready' : '⚠️ Loading'}</p>
-                  </div>
-                </div>
-                <div className="col-md-3 mb-3">
-                  <div className={`p-3 rounded ${healthStatus?.components?.tanakh_data ? 'bg-success' : 'bg-warning'} text-white`}>
-                    <h6>Hebrew Data</h6>
-                    <p className="mb-0">{healthStatus?.components?.tanakh_data ? '✅ Loaded' : '⚠️ Loading'}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Hebrew Analysis - Your Original Working Feature */}
-      <div className="row mb-5">
-        <div className="col-md-6">
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">⚡ Quick Hebrew Analysis</h5>
-            </div>
-            <div className="card-body">
-              {error && (
-                <div className="alert alert-danger" role="alert">
-                  {error}
-                </div>
-              )}
-
-              <div className="mb-3">
-                <label className="form-label">Hebrew Word:</label>
-                <input
-                  type="text"
-                  value={inputWord}
-                  onChange={(e) => setInputWord(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && analyzeWord()}
-                  className="form-control"
-                  placeholder="Enter Hebrew word (e.g., בראשית)"
-                  style={{ direction: 'rtl', textAlign: 'right' }}
-                />
-              </div>
-
-              <div className="d-grid gap-2 mb-3">
-                <button
-                  onClick={analyzeWord}
-                  disabled={analyzing || !inputWord.trim()}
-                  className="btn btn-primary"
-                >
-                  {analyzing ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2"></span>
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <i className="bi bi-search me-2"></i>
-                      Analyze Word
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label">Quick Words:</label>
-                <div className="d-flex flex-wrap gap-2">
-                  {quickWords.map((word, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setInputWord(word)}
-                      className="btn btn-outline-secondary btn-sm"
-                    >
-                      {word}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-6">
-          <div className="card">
-            <div className="card-header">
-              <h5 className="mb-0">🤖 Analysis Results</h5>
-            </div>
-            <div className="card-body">
-              {analysisResult ? (
-                <div>
-                  <div className="mb-3">
-                    <h6>Hebrew Word:</h6>
-                    <p className="fs-5 fw-bold" style={{ direction: 'rtl', textAlign: 'right' }}>
-                      {analysisResult.word}
-                    </p>
-                  </div>
-
-                  {analysisResult.translation && (
-                    <div className="mb-3">
-                      <h6>Translation:</h6>
-                      <p>{analysisResult.translation}</p>
-                    </div>
-                  )}
-
-                  {analysisResult.grammar_info && (
-                    <div className="mb-3">
-                      <h6>Grammar Analysis:</h6>
-                      <div className="bg-light p-3 rounded">
-                        {analysisResult.grammar_info.hebrew_root && (
-                          <p className="mb-2"><strong>Root:</strong> {analysisResult.grammar_info.hebrew_root}</p>
-                        )}
-                        {analysisResult.grammar_info.word_type && (
-                          <p className="mb-2"><strong>Type:</strong> {analysisResult.grammar_info.word_type}</p>
-                        )}
-                        {analysisResult.grammar_info.morphological_analysis && (
-                          <p className="mb-0"><strong>Analysis:</strong> {analysisResult.grammar_info.morphological_analysis}</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {analysisResult.confidence && (
-                    <div className="mb-3">
-                      <h6>Confidence:</h6>
-                      <div className="progress">
-                        <div
-                          className="progress-bar bg-success"
-                          style={{ width: `${(analysisResult.confidence * 100)}%` }}
-                        ></div>
-                      </div>
-                      <p className="small mt-1 mb-0">
-                        {Math.round(analysisResult.confidence * 100)}% ({analysisResult.model_used || 'AI Model'})
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center text-muted py-4">
-                  <i className="bi bi-search display-3 mb-3"></i>
-                  <p>Enter a Hebrew word to see AI-powered analysis</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Feature Cards */}
-      <div className="row mb-5">
-        <div className="col-md-4 mb-3">
-          <div className="card h-100">
-            <div className="card-body text-center">
-              <i className="bi bi-cpu display-4 text-primary mb-3"></i>
-              <h5>AI-Powered Analysis</h5>
-              <p>Advanced AlephBERT + Llama 3 hybrid intelligence for accurate Biblical Hebrew understanding</p>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-4 mb-3">
-          <div className="card h-100">
-            <div className="card-body text-center">
-              <i className="bi bi-book display-4 text-success mb-3"></i>
-              <h5>Complete Hebrew Bible</h5>
-              <p>Full Tanakh with all 39 books, chapters, and verses with cantillation marks</p>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-4 mb-3">
-          <div className="card h-100">
-            <div className="card-body text-center">
-              <i className="bi bi-graph-up display-4 text-info mb-3"></i>
-              <h5>Progress Tracking</h5>
-              <p>Personal dashboard to monitor your learning journey and vocabulary growth</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Call to Action */}
-      <div className="text-center">
-        <div className="d-grid gap-2 d-md-block mb-4">
-          <a href="#register" className="btn btn-primary btn-lg me-md-2">
-            <i className="bi bi-person-plus me-2"></i>
-            Start Learning
-          </a>
-          <a href="#login" className="btn btn-outline-primary btn-lg">
-            <i className="bi bi-box-arrow-in-right me-2"></i>
-            Login
-          </a>
-        </div>
-
-        <div className="bg-light p-4 rounded">
-          <h4>🚀 Platform Features</h4>
-          <div className="row text-start">
-            <div className="col-md-6">
-              <ul className="list-unstyled">
-                <li><i className="bi bi-check-circle text-success me-2"></i>Real-time Hebrew text analysis</li>
-                <li><i className="bi bi-check-circle text-success me-2"></i>Individual word breakdown</li>
-                <li><i className="bi bi-check-circle text-success me-2"></i>Biblical context explanations</li>
-                <li><i className="bi bi-check-circle text-success me-2"></i>Pronunciation guides</li>
-              </ul>
-            </div>
-            <div className="col-md-6">
-              <ul className="list-unstyled">
-                <li><i className="bi bi-check-circle text-success me-2"></i>Personal progress tracking</li>
-                <li><i className="bi bi-check-circle text-success me-2"></i>Study session management</li>
-                <li><i className="bi bi-check-circle text-success me-2"></i>Adaptive learning levels</li>
-                <li><i className="bi bi-check-circle text-success me-2"></i>GPU-accelerated AI processing</li>
-              </ul>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -606,18 +320,18 @@ const StudyPageWrapper = withAuth(() => {
   return <StudyPage />;
 });
 
-// Study Page Component
-const StudyPage: React.FC = () => {
+// Study Page Component (Your existing study interface)
+const StudyPage = () => {
   const { user, analyzeText, analyzeWord, getBooks, startStudySession, endStudySession } = useAuth();
-  const [books, setBooks] = useState<Book[]>([]);
-  const [selectedBook, setSelectedBook] = useState<string>('');
-  const [selectedChapter, setSelectedChapter] = useState<number>(1);
-  const [inputText, setInputText] = useState<string>('');
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-  const [studySessionActive, setStudySessionActive] = useState<boolean>(false);
-  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [books, setBooks] = useState([]);
+  const [selectedBook, setSelectedBook] = useState('');
+  const [selectedChapter, setSelectedChapter] = useState(1);
+  const [inputText, setInputText] = useState('');
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [studySessionActive, setStudySessionActive] = useState(false);
+  const [sessionStartTime, setSessionStartTime] = useState(null);
 
   // Load books on component mount
   useEffect(() => {
@@ -652,7 +366,7 @@ const StudyPage: React.FC = () => {
     if (!sessionStartTime) return;
     
     try {
-      const studyMinutes = Math.floor((new Date().getTime() - sessionStartTime.getTime()) / 60000);
+      const studyMinutes = Math.floor((new Date() - sessionStartTime) / 60000);
       const wordsAnalyzed = analysisResult ? inputText.split(' ').length : 0;
       
       await endStudySession(studyMinutes, wordsAnalyzed);
@@ -684,7 +398,7 @@ const StudyPage: React.FC = () => {
     }
   };
 
-  const handleWordAnalyze = async (word: string) => {
+  const handleWordAnalyze = async (word) => {
     if (!word.trim()) return;
 
     setLoading(true);
@@ -729,10 +443,10 @@ const StudyPage: React.FC = () => {
             </div>
           </div>
 
-          {studySessionActive && sessionStartTime && (
+          {studySessionActive && (
             <div className="alert alert-info mb-4">
               <i className="bi bi-clock me-2"></i>
-              Study session active since {sessionStartTime.toLocaleTimeString()}
+              Study session active since {sessionStartTime?.toLocaleTimeString()}
             </div>
           )}
         </div>
@@ -758,7 +472,7 @@ const StudyPage: React.FC = () => {
                 <textarea
                   id="hebrewInput"
                   className="form-control"
-                  rows={3}
+                  rows="3"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Type Hebrew text here... (e.g., בראשית ברא אלהים)"
@@ -926,7 +640,7 @@ const StudyPage: React.FC = () => {
 
 // Protected Profile Page Wrapper
 const ProfilePageWrapper = withAuth(() => {
-  const [showProfile, setShowProfile] = useState<boolean>(true);
+  const [showProfile, setShowProfile] = useState(true);
   
   return showProfile ? (
     <UserProfile onClose={() => window.location.hash = '#home'} />

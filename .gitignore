@@ -1,4 +1,29 @@
-# Python
+# Hebrew AI Project - Comprehensive .gitignore
+
+# ================================
+# NODE.JS / NPM
+# ================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.npm
+.pnpm-debug.log
+
+# ================================
+# REACT / VITE BUILD FILES
+# ================================
+dist/
+build/
+.vite/
+.cache/
+*.tsbuildinfo
+
+# ================================
+# PYTHON
+# ================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -22,129 +47,38 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# Virtual Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-tanakh_ai_3.11.9/
+# PyInstaller
+*.manifest
+*.spec
 
-# IDE
-.vscode/settings.json
-.vscode/launch.json
-.vscode/extensions.json
-.vscode/.ropeproject
-.idea/
-*.swp
-*.swo
-*~
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
 
-# API Keys and Secrets
-config/api_keys.env
-config/.env
-.env
-*.key
-secrets/
-
-# Large Data Files
-data/audio/*.mp3
-data/audio/*.wav
-data/embeddings/*.pkl
-data/embeddings/*.bin
-*.model
-*.pickle
-
-# Temporary Files
-*.tmp
-*.temp
-.DS_Store
-Thumbs.db
-
-# Logs
-logs/
-*.log
-debug.log
-error.log
-
-# Testing
-.pytest_cache/
-.coverage
+# Unit test / coverage reports
 htmlcov/
 .tox/
+.nox/
+.coverage
+.coverage.*
 .cache
 nosetests.xml
 coverage.xml
 *.cover
+*.py,cover
 .hypothesis/
+.pytest_cache/
+cover/
 
-# Documentation builds
-docs/_build/
-docs/site/
-site/
-
-# Jupyter Notebooks (checkpoints)
+# ================================
+# JUPYTER NOTEBOOKS
+# ================================
 .ipynb_checkpoints
+*/.ipynb_checkpoints/*
 
-# Local development
-local_config.json
-development_notes.md
-scratch/
-temp/
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Hebrew AI Specific
-# Keep Hebrew Bible JSON but ignore processed versions
-data/tanakh/processed/
-data/lexicon/cache/
-data/embeddings/vectors/
-
-# Audio files too large for git
-data/audio/full_readings/
-data/audio/pronunciations/*.wav
-
-# Model files
-models/
-*.pth
-*.h5
-*.pkl
-*.joblib
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Virtual Environments
+# ================================
+# PYTHON VIRTUAL ENVIRONMENTS
+# ================================
 .env
 .venv
 env/
@@ -154,62 +88,259 @@ env.bak/
 venv.bak/
 tanakh_ai_3.11.9/
 
-# IDE
+# ================================
+# AI MODEL FILES & DATA
+# ================================
+# Large model files
+*.bin
+*.safetensors
+*.onnx
+*.pb
+*.h5
+*.keras
+*.pth
+*.pt
+models/
+checkpoints/
+weights/
+
+# Hugging Face cache
+.cache/huggingface/
+
+# Large data files
+*.parquet
+*.feather
+*.hdf5
+data/cache/
+data/processed/
+data/temp/
+
+# Keep essential data but ignore large processed files
+!data/tanakh/hebrew_bible_with_nikkud.json
+data/analysis/large_*.json
+data/exports/
+
+# ================================
+# LOGS & DATABASES
+# ================================
+logs/
+*.log
+log/
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Keep the Hebrew learning database structure but not data
+!data/hebrew_learning_schema.sql
+
+# ================================
+# SYSTEM FILES
+# ================================
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ================================
+# IDE & EDITOR FILES
+# ================================
+# Visual Studio Code
 .vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+.ionide/
+
+# JetBrains IDEs
 .idea/
 *.swp
 *.swo
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+[._]*.s[a-v][a-z]
+!*.svg
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Emacs
 *~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
 
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# AI Models (large files)
-*.bin
-*.safetensors
-models/
-cache/
-.cache/
-transformers_cache/
-
-# PyTorch
-*.pth
-*.pt
-
-# Logs
-*.log
-logs/*.log
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-
-# API Keys and Secrets
+# ================================
+# ENVIRONMENT & CONFIG FILES
+# ================================
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.backup
+
+# API Keys and secrets (keep these out!)
 config/secrets.json
+config/api_keys.json
 *.key
+*.pem
+*.crt
+*.p12
 
-# Database files (keep structure, exclude data)
-*.db
-data/backups/
-data/demo_*
+# ================================
+# TEMPORARY & BACKUP FILES
+# ================================
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+*.swp
+*.swo
+*~
+*.autosave
 
-# Large data files (use Git LFS if needed)
-data/tanakh/*.json
-data/embeddings/
-data/analysis/large_*
+# ================================
+# PACKAGE MANAGERS
+# ================================
+# Yarn
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
 
-# Jupyter Notebooks checkpoints
-.ipynb_checkpoints/
+# ================================
+# DEPLOYMENT & DOCKER
+# ================================
+Dockerfile.prod
+docker-compose.override.yml
+.dockerignore
 
-# Week 3 specific excludes
-data/api_cache/
-data/progress/demo_*
-src/core/__pycache__/
+# ================================
+# TESTING
+# ================================
+coverage/
+*.lcov
+test-results/
+playwright-report/
+test-results.xml
+
+# ================================
+# PROJECT SPECIFIC
+# ================================
+# Documentation builds
+docs/_build/
+site/
+
+# Ignore large documentation exports
+documentation/*.pdf
+documentation/*.docx
+
+# Performance & profiling
+*.prof
+*.trace
+
+# GPU memory dumps
+*.nvvp
+*.nvprof
+
+# PyTorch Lightning logs
+lightning_logs/
+
+# MLflow
+mlruns/
+
+# Weights & Biases
+wandb/
+
+# ================================
+# KEEP IMPORTANT PROJECT FILES
+# ================================
+# Essential configuration files to keep
+!package.json
+!package-lock.json
+!requirements.txt
+!pyproject.toml
+!setup.py
+!README.md
+!LICENSE
+!.gitignore
+!vite.config.ts
+!tsconfig.json
+!tailwind.config.js
+
+# Keep source code structure
+!src/
+!frontend/
+!learning_exercises/
+!launch_hebrew_platform.py
+
+# Keep essential data files (small ones)
+!data/tanakh/
+!data/progress/
+!data/lexicon/
+
+# ================================
+# CHAT & DOCUMENTATION HISTORY
+# ================================
+# Keep learning documentation but ignore chat exports
+!*.md
+chat_exports/
+conversation_history/
+*_chat_*.txt
+*_handoff_*.md
