@@ -1,7 +1,3 @@
-// Make sure these imports work
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
@@ -32,5 +28,5 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
   
   .card {
     @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
-  }
-}
+  } /* Close .card rule */
+} /* Close @layer components block */
