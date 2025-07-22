@@ -1,16 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import tailwindcss from 'tailwindcss';
-import autoprefixer from 'autoprefixer';
 
 export default defineConfig({
   plugins: [react()],
-  css: {
-    postcss: {
-      plugins: [tailwindcss(), autoprefixer()],
-    },
-  },
   server: {
-    host: true, // Optional: Enables network access
+    fs: {
+      allow: [
+        'D:/AI/Gits/tanakh_ai_tutor/frontend/hebrew-ai-react',
+        'D:/AI/Gits/tanakh_ai_tutor/frontend/hebrew-ai-react/node_modules',
+      ],
+    },
   },
 });

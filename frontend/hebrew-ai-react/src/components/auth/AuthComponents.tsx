@@ -1,7 +1,7 @@
 // src/components/auth/AuthComponents.tsx - Authentication Components
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Added useEffect import
 import { useAuth } from '../../contexts/AuthContext';
-import { Modal, Button } from 'react-bootstrap'; // Assuming Bootstrap is installed
+import { Modal, Button } from 'react-bootstrap';
 
 export const AuthPage: React.FC = () => {
   const { register, login } = useAuth();
@@ -42,49 +42,21 @@ export const AuthPage: React.FC = () => {
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                   <label htmlFor="username" className="form-label">Username</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="username"
-                    name="username"
-                    value={credentials.username}
-                    onChange={handleChange}
-                    required
-                  />
+                  <input type="text" className="form-control" id="username" name="username" value={credentials.username} onChange={handleChange} required />
                 </div>
                 {!isLogin && (
                   <div className="mb-3">
                     <label htmlFor="email" className="form-label">Email</label>
-                    <input
-                      type="email"
-                      className="form-control"
-                      id="email"
-                      name="email"
-                      value={credentials.email}
-                      onChange={handleChange}
-                      required
-                    />
+                    <input type="email" className="form-control" id="email" name="email" value={credentials.email} onChange={handleChange} required />
                   </div>
                 )}
                 <div className="mb-3">
                   <label htmlFor="password" className="form-label">Password</label>
-                  <input
-                    type="password"
-                    className="form-control"
-                    id="password"
-                    name="password"
-                    value={credentials.password}
-                    onChange={handleChange}
-                    required
-                  />
+                  <input type="password" className="form-control" id="password" name="password" value={credentials.password} onChange={handleChange} required />
                 </div>
                 <button type="submit" className="btn btn-primary w-100">{isLogin ? 'Login' : 'Register'}</button>
                 <div className="text-center mt-3">
-                  <button
-                    type="button"
-                    className="btn btn-link"
-                    onClick={() => setIsLogin(!isLogin)}
-                  >
+                  <button type="button" className="btn btn-link" onClick={() => setIsLogin(!isLogin)}>
                     {isLogin ? 'Need an account? Register' : 'Already have an account? Login'}
                   </button>
                 </div>
@@ -135,56 +107,27 @@ export const AuthModal: React.FC<{ show: boolean; onHide: () => void; onAuthSucc
 
   return (
     <Modal show={show} onHide={onHide} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>{isLogin ? 'Login' : 'Register'}</Modal.Title>
-      </Modal.Header>
+      <Modal.Header closeButton><Modal.Title>{isLogin ? 'Login' : 'Register'}</Modal.Title></Modal.Header>
       <Modal.Body>
         {error && <div className="alert alert-danger">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label htmlFor="username" className="form-label">Username</label>
-            <input
-              type="text"
-              className="form-control"
-              id="username"
-              name="username"
-              value={credentials.username}
-              onChange={handleChange}
-              required
-            />
+            <input type="text" className="form-control" id="username" name="username" value={credentials.username} onChange={handleChange} required />
           </div>
           {!isLogin && (
             <div className="mb-3">
               <label htmlFor="email" className="form-label">Email</label>
-              <input
-                type="email"
-                className="form-control"
-                id="email"
-                name="email"
-                value={credentials.email}
-                onChange={handleChange}
-                required
-              />
+              <input type="email" className="form-control" id="email" name="email" value={credentials.email} onChange={handleChange} required />
             </div>
           )}
           <div className="mb-3">
             <label htmlFor="password" className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-control"
-              id="password"
-              name="password"
-              value={credentials.password}
-              onChange={handleChange}
-              required
-            />
+            <input type="password" className="form-control" id="password" name="password" value={credentials.password} onChange={handleChange} required />
           </div>
           <Button variant="primary" type="submit">{isLogin ? 'Login' : 'Register'}</Button>
           <div className="text-center mt-3">
-            <Button
-              variant="link"
-              onClick={() => setIsLogin(!isLogin)}
-            >
+            <Button variant="link" onClick={() => setIsLogin(!isLogin)}>
               {isLogin ? 'Need an account? Register' : 'Already have an account? Login'}
             </Button>
           </div>
@@ -206,8 +149,13 @@ export const UserProfile: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }, []);
 
   const loadProfile = async () => {
-    const profileData = await getUserProfile();
-    setProfile(profileData);
+    try {
+      const profileData = await getUserProfile();
+      setProfile(profileData || user); // Fallback to current user if API fails
+    } catch (err) {
+      console.error('Profile load error:', err);
+      setProfile(user); // Fallback to available user data
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -230,53 +178,36 @@ export const UserProfile: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     }
   };
 
+  // Error Boundary to handle rendering issues
+  if (!profile) return <div className="text-center p-4">Loading profile...</div>;
+
   return (
     <Modal show={true} onHide={onClose} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>User Profile</Modal.Title>
-      </Modal.Header>
+      <Modal.Header closeButton><Modal.Title>User Profile</Modal.Title></Modal.Header>
       <Modal.Body>
         {error && <div className="alert alert-danger">{error}</div>}
-        {profile ? (
-          editMode ? (
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label htmlFor="username" className="form-label">Username</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="username"
-                  name="username"
-                  defaultValue={profile.username}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="email" className="form-label">Email</label>
-                <input
-                  type="email"
-                  className="form-control"
-                  id="email"
-                  name="email"
-                  defaultValue={profile.email}
-                  onChange={handleChange}
-                />
-              </div>
-              <Button variant="primary" type="submit">Save Changes</Button>
-              <Button variant="secondary" className="ms-2" onClick={() => setEditMode(false)}>Cancel</Button>
-            </form>
-          ) : (
-            <div>
-              <p><strong>Username:</strong> {profile.username}</p>
-              <p><strong>Email:</strong> {profile.email}</p>
-              <p><strong>Level:</strong> {profile.learning_level}</p>
-              <p><strong>Study Time:</strong> {profile.total_study_time || 0} min</p>
-              <p><strong>Words Learned:</strong> {profile.words_learned || 0}</p>
-              <Button variant="primary" onClick={() => setEditMode(true)}>Edit Profile</Button>
+        {editMode ? (
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label htmlFor="username" className="form-label">Username</label>
+              <input type="text" className="form-control" id="username" name="username" defaultValue={profile.username} onChange={handleChange} />
             </div>
-          )
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label">Email</label>
+              <input type="email" className="form-control" id="email" name="email" defaultValue={profile.email} onChange={handleChange} />
+            </div>
+            <Button variant="primary" type="submit">Save Changes</Button>
+            <Button variant="secondary" className="ms-2" onClick={() => setEditMode(false)}>Cancel</Button>
+          </form>
         ) : (
-          <div>Loading profile...</div>
+          <div>
+            <p><strong>Username:</strong> {profile.username || 'N/A'}</p>
+            <p><strong>Email:</strong> {profile.email || 'N/A'}</p>
+            <p><strong>Level:</strong> {profile.learning_level || 'N/A'}</p>
+            <p><strong>Study Time:</strong> {profile.total_study_time || 0} min</p>
+            <p><strong>Words Learned:</strong> {profile.words_learned || 0}</p>
+            <Button variant="primary" onClick={() => setEditMode(true)}>Edit Profile</Button>
+          </div>
         )}
       </Modal.Body>
     </Modal>

@@ -1,4 +1,4 @@
-// App.tsx - Enhanced App with Authentication and Your Existing Features
+// App.tsx - Enhanced App with Authentication and Debugging
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth, withAuth } from './contexts/AuthContext';
@@ -14,7 +14,7 @@ interface User {
   words_learned?: number;
   learning_level?: string;
   current_chapter?: number;
-  email?: string; // Added for completeness from login response
+  email?: string;
 }
 
 interface Book {
@@ -38,13 +38,38 @@ interface AnalysisResult {
   model_used?: string;
 }
 
+// Error Boundary Component
+const ErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const handleError = () => setHasError(true);
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  if (hasError) {
+    return (
+      <div className="container mt-5 text-center">
+        <h2>😞 Something Went Wrong</h2>
+        <p>An error occurred. Please try refreshing the page or contact support.</p>
+        <button className="btn btn-primary mt-3" onClick={() => window.location.reload()}>Refresh</button>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+};
+
 // Main App Component
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <Router>
         <div className="App">
-          <AppContent />
+          <ErrorBoundary>
+            <AppContent />
+          </ErrorBoundary>
         </div>
       </Router>
     </AuthProvider>
@@ -53,16 +78,14 @@ const App: React.FC = () => {
 
 // App Content with Routing
 const AppContent: React.FC = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
+  console.log('AppContent - isAuthenticated:', isAuthenticated, 'user:', user); // Debug log
   const location = useLocation();
 
-  // Sync hash with router state
   useEffect(() => {
     const hash = location.hash.slice(1) || 'home';
-    // No need to set state here; router handles it
   }, [location]);
 
-  // Show loading spinner during authentication check
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center vh-100">
@@ -96,11 +119,13 @@ const AppContent: React.FC = () => {
 // Navigation Bar Component
 const Navbar: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfile, setShowProfile] = useState<boolean>(false);
 
+  const handleAuthSuccess = () => setShowAuthModal(false);
   const handleLogout = () => {
     logout();
-    window.location.href = '/'; // Use router navigation
+    window.location.href = '/';
   };
 
   return (
@@ -171,14 +196,20 @@ const Navbar: React.FC = () => {
               ) : (
                 <>
                   <li className="nav-item">
-                    <a className="nav-link" href="/login">
+                    <button
+                      className="nav-link btn btn-link"
+                      onClick={() => setShowAuthModal(true)}
+                    >
                       <i className="bi bi-box-arrow-in-right me-1"></i>Login
-                    </a>
+                    </button>
                   </li>
                   <li className="nav-item">
-                    <a className="nav-link" href="/register">
+                    <button
+                      className="nav-link btn btn-link"
+                      onClick={() => setShowAuthModal(true)}
+                    >
                       <i className="bi bi-person-plus me-1"></i>Register
-                    </a>
+                    </button>
                   </li>
                 </>
               )}
@@ -187,77 +218,83 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* Profile Modal */}
-      {showProfile && (
-        <UserProfile onClose={() => setShowProfile(false)} />
-      )}
+      <AuthModal show={showAuthModal} onHide={() => setShowAuthModal(false)} onAuthSuccess={handleAuthSuccess} />
+      {showProfile && <UserProfile onClose={() => setShowProfile(false)} />}
     </>
   );
 };
 
 // Home Page Component
 const HomePage: React.FC = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
+  console.log('HomePage - isAuthenticated:', isAuthenticated, 'user:', user); // Debug log
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/';
+  };
+
+  if (!isAuthenticated || !user) {
+    console.log('HomePage - Redirecting due to authentication failure');
+    return <Navigate to="/login" />;
+  }
 
   return (
     <div className="container mt-5">
       <div className="row">
         <div className="col-lg-8 mx-auto">
-          {isAuthenticated ? (
-            // Authenticated Home Page
-            <div className="text-center">
-              <h1 className="display-4 mb-4">
-                Welcome back, <span className="text-primary">{user?.username}</span>! 🎉
-              </h1>
-              <p className="lead mb-4">
-                Your Hebrew AI Learning Platform is ready. Continue your journey to Biblical Hebrew mastery!
-              </p>
-              
-              <div className="row mb-5">
-                <div className="col-md-4 mb-3">
-                  <div className="card h-100">
-                    <div className="card-body text-center">
-                      <i className="bi bi-clock-history display-4 text-primary mb-3"></i>
-                      <h5>Study Time</h5>
-                      <h3 className="text-success">{user?.total_study_time || 0} min</h3>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-4 mb-3">
-                  <div className="card h-100">
-                    <div className="card-body text-center">
-                      <i className="bi bi-journal-text display-4 text-info mb-3"></i>
-                      <h5>Words Learned</h5>
-                      <h3 className="text-success">{user?.words_learned || 0}</h3>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-4 mb-3">
-                  <div className="card h-100">
-                    <div className="card-body text-center">
-                      <i className="bi bi-trophy display-4 text-warning mb-3"></i>
-                      <h5>Level</h5>
-                      <h3 className="text-capitalize text-success">{user?.learning_level || 'Beginner'}</h3>
-                    </div>
+          <div className="text-center">
+            <h1 className="display-4 mb-4">
+              Welcome back, <span className="text-primary">{user.username}</span>! 🎉
+            </h1>
+            <p className="lead mb-4">
+              Your Hebrew AI Learning Platform is ready. Continue your journey to Biblical Hebrew mastery!
+            </p>
+            
+            <div className="row mb-5">
+              <div className="col-md-4 mb-3">
+                <div className="card h-100">
+                  <div className="card-body text-center">
+                    <i className="bi bi-clock-history display-4 text-primary mb-3"></i>
+                    <h5>Study Time</h5>
+                    <h3 className="text-success">{user.total_study_time || 0} min</h3>
                   </div>
                 </div>
               </div>
-              
-              <div className="d-grid gap-2 d-md-block">
-                <a href="/study" className="btn btn-primary btn-lg me-md-2">
-                  <i className="bi bi-play-fill me-2"></i>
-                  Continue Learning
-                </a>
-                <a href="/profile" className="btn btn-outline-primary btn-lg">
-                  <i className="bi bi-person me-2"></i>
-                  View Profile
-                </a>
+              <div className="col-md-4 mb-3">
+                <div className="card h-100">
+                  <div className="card-body text-center">
+                    <i className="bi bi-journal-text display-4 text-info mb-3"></i>
+                    <h5>Words Learned</h5>
+                    <h3 className="text-success">{user.words_learned || 0}</h3>
+                  </div>
+                </div>
+              </div>
+              <div className="col-md-4 mb-3">
+                <div className="card h-100">
+                  <div className="card-body text-center">
+                    <i className="bi bi-trophy display-4 text-warning mb-3"></i>
+                    <h5>Level</h5>
+                    <h3 className="text-capitalize text-success">{user.learning_level || 'Beginner'}</h3>
+                  </div>
+                </div>
               </div>
             </div>
-          ) : (
-            // Public Home Page - Your Original Working Hebrew AI Interface
-            <PublicHomePage />
-          )}
+            
+            <div className="d-grid gap-2 d-md-block">
+              <a href="/study" className="btn btn-primary btn-lg me-md-2">
+                <i className="bi bi-play-fill me-2"></i>
+                Continue Learning
+              </a>
+              <a href="/profile" className="btn btn-outline-primary btn-lg">
+                <i className="bi bi-person me-2"></i>
+                View Profile
+              </a>
+              <button className="btn btn-danger btn-lg mt-3" onClick={handleLogout}>
+                <i className="bi bi-box-arrow-right me-2"></i>Logoff
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -272,7 +309,7 @@ const PublicHomePage: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [analyzing, setAnalyzing] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-  const { analyzeWord } = useAuth(); // Destructure analyzeWord from useAuth hook
+  const { analyzeWord } = useAuth();
 
   useEffect(() => {
     checkSystemHealth();
@@ -608,7 +645,7 @@ const StudyPage: React.FC = () => {
       const response = await getBooks();
       const bookList: Book[] = (response.books || []).map((bookId: string) => ({
         id: bookId,
-        name: bookId, // Adjust if you have hebrew_name data
+        name: bookId,
       }));
       setBooks(bookList);
       if (bookList.length > 0) setSelectedBook(bookList[0].id);
@@ -680,6 +717,11 @@ const StudyPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/';
   };
 
   const quickWords = ['בראשית', 'אלהים', 'שלום', 'תורה', 'ישראל'];
@@ -900,6 +942,11 @@ const StudyPage: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+      <div className="text-center mt-4">
+        <button className="btn btn-danger btn-lg" onClick={handleLogout}>
+          <i className="bi bi-box-arrow-right me-2"></i>Logoff
+        </button>
       </div>
     </div>
   );
