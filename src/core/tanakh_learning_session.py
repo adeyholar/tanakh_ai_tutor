@@ -13,7 +13,8 @@ from pathlib import Path
 import logging
 
 # Import our new OOP analyzers
-from src.core.hebrew_analyzers import HebrewAnalyzer, AlephBertAnalyzer, OllamaAnalyzer, AnalysisResult
+from src.core.hebrew_analyzers import HebrewAnalyzer, EnhancedAlephBertAnalyzer, AnalysisResult
+from src.core.auth_system import AuthenticationSystem  # For progress sync
 
 @dataclass
 class WordLearning:
@@ -48,10 +49,9 @@ class TanakhLearningSession:
         self.vocabulary: Dict[str, WordLearning] = {}
         self.study_history: List[VerseStudy] = []
         
-        # Initialize analyzers
-        self.alephbert = AlephBertAnalyzer()
-        self.ollama = OllamaAnalyzer()
-        self.available_analyzers: List[HebrewAnalyzer] = []
+        # Initialize analyzer
+        self.enhanced_analyzer = EnhancedAlephBertAnalyzer()
+        self.available_analyzers: List[HebrewAnalyzer] = [self.enhanced_analyzer] if self.enhanced_analyzer.initialize() else []
         
         # Session statistics
         self.session_start = datetime.now()
@@ -60,7 +60,8 @@ class TanakhLearningSession:
         
         # Setup logging
         self.logger = logging.getLogger("TanakhLearning")
-        
+        self.auth_system = AuthenticationSystem(database_path="data/hebrew_learning.db")  # For sync
+
     async def initialize(self) -> bool:
         """Initialize the learning session"""
         try:
@@ -70,8 +71,12 @@ class TanakhLearningSession:
             if not await self._load_tanakh_data():
                 return False
             
-            # Initialize AI analyzers
-            await self._initialize_analyzers()
+            # Initialize AI analyzer
+            if not self.enhanced_analyzer.initialize():
+                self.logger.warning("⚠️ EnhancedAlephBertAnalyzer not available")
+                self.available_analyzers = []
+            
+            self.logger.info(f"🎯 {len(self.available_analyzers)} analyzers available")
             
             # Load user progress
             await self._load_progress()
@@ -101,29 +106,6 @@ class TanakhLearningSession:
             self.logger.error(f"Failed to load Tanakh data: {e}")
             return False
     
-    async def _initialize_analyzers(self):
-        """Initialize available AI analyzers"""
-        self.logger.info("🤖 Initializing AI analyzers...")
-        
-        # Try AlephBERT
-        if self.alephbert.initialize():
-            self.available_analyzers.append(self.alephbert)
-            self.logger.info("✅ AlephBERT ready for Biblical Hebrew analysis")
-        else:
-            self.logger.warning("⚠️ AlephBERT not available")
-        
-        # Try Ollama (but don't fail if it's not working)
-        try:
-            if self.ollama.initialize():
-                self.available_analyzers.append(self.ollama)
-                self.logger.info("✅ Ollama ready for educational explanations")
-            else:
-                self.logger.warning("⚠️ Ollama not available")
-        except Exception as e:
-            self.logger.warning(f"⚠️ Ollama initialization failed: {e}")
-        
-        self.logger.info(f"🎯 {len(self.available_analyzers)} analyzers available")
-    
     async def _load_progress(self):
         """Load user learning progress"""
         try:
@@ -150,7 +132,7 @@ class TanakhLearningSession:
         except Exception as e:
             self.logger.warning(f"Could not load progress: {e}")
     
-    async def study_verse(self, book: str, chapter: int, verse: int) -> Optional[VerseStudy]:
+    async def study_verse(self, book: str, chapter: int, verse: int, user_id: Optional[int] = None) -> Optional[VerseStudy]:
         """Study a specific verse with AI analysis"""
         try:
             self.logger.info(f"📖 Studying {book} {chapter}:{verse}")
@@ -175,14 +157,14 @@ class TanakhLearningSession:
                 if not clean_word:
                     continue
                 
-                # Get analysis from available analyzers
-                word_analysis = await self._analyze_word_with_available_models(clean_word)
+                # Get analysis from enhanced analyzer
+                word_analysis = await self.enhanced_analyzer.analyze_word(clean_word)
                 if word_analysis:
-                    analysis_results.extend(word_analysis)
+                    analysis_results.append(word_analysis)
                     words_learned.append(clean_word)
                     
-                    # Update vocabulary tracking
-                    await self._update_word_learning(clean_word, word_analysis[0])
+                    # Update vocabulary tracking and sync with auth_system
+                    await self._update_word_learning(clean_word, word_analysis, user_id)
             
             # Create verse study record
             verse_study = VerseStudy(
@@ -260,7 +242,7 @@ class TanakhLearningSession:
         return cleaned.strip()
     
     async def _analyze_word_with_available_models(self, word: str) -> List[AnalysisResult]:
-        """Analyze word with all available models"""
+        """Analyze word with the enhanced analyzer"""
         results = []
         
         for analyzer in self.available_analyzers:
@@ -268,12 +250,12 @@ class TanakhLearningSession:
                 result = await analyzer.analyze_word(word)
                 results.append(result)
             except Exception as e:
-                self.logger.warning(f"Analysis failed with {analyzer.name}: {e}")
+                self.logger.warning(f"Analysis failed with {analyzer.model_name}: {e}")
         
         return results
     
-    async def _update_word_learning(self, word: str, analysis: AnalysisResult):
-        """Update learning progress for a word"""
+    async def _update_word_learning(self, word: str, analysis: AnalysisResult, user_id: Optional[int] = None):
+        """Update learning progress for a word and sync with auth_system"""
         now = datetime.now()
         
         if word in self.vocabulary:
@@ -301,6 +283,14 @@ class TanakhLearningSession:
                 last_studied=now,
                 mastery_level="beginner"
             )
+        
+        # Sync with auth_system if user_id is provided
+        if user_id:
+            self.auth_system.track_word_study(
+                user_id=user_id,
+                hebrew_word=word,
+                english_translation=analysis.translation
+            )
     
     def get_session_stats(self) -> Dict[str, Any]:
         """Get current session statistics"""
@@ -309,7 +299,7 @@ class TanakhLearningSession:
             "verses_studied_today": self.verses_studied_today,
             "words_studied_today": self.words_studied_today,
             "total_vocabulary": len(self.vocabulary),
-            "available_analyzers": [a.name for a in self.available_analyzers],
+            "available_analyzers": [a.model_name for a in self.available_analyzers],
             "mastery_distribution": self._get_mastery_distribution()
         }
     

@@ -1,5 +1,6 @@
-// App.tsx - Complete Working App with Authentication Integration
+// App.tsx - Enhanced App with Authentication and Your Existing Features
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth, withAuth } from './contexts/AuthContext';
 import { AuthPage, AuthModal, UserProfile } from './components/auth/AuthComponents';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -7,11 +8,13 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 
 // Type definitions for compatibility
 interface User {
+  id?: number;
   username?: string;
   total_study_time?: number;
   words_learned?: number;
   learning_level?: string;
   current_chapter?: number;
+  email?: string; // Added for completeness from login response
 }
 
 interface Book {
@@ -39,9 +42,11 @@ interface AnalysisResult {
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <div className="App">
-        <AppContent />
-      </div>
+      <Router>
+        <div className="App">
+          <AppContent />
+        </div>
+      </Router>
     </AuthProvider>
   );
 };
@@ -49,27 +54,20 @@ const App: React.FC = () => {
 // App Content with Routing
 const AppContent: React.FC = () => {
   const { isAuthenticated, loading } = useAuth();
-  const [currentPage, setCurrentPage] = useState<string>('home');
+  const location = useLocation();
 
-  // Simple hash-based routing
+  // Sync hash with router state
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.slice(1) || 'home';
-      setCurrentPage(hash);
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // Set initial page
-
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+    const hash = location.hash.slice(1) || 'home';
+    // No need to set state here; router handles it
+  }, [location]);
 
   // Show loading spinner during authentication check
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center vh-100">
         <div className="text-center">
-          <div className="spinner-border text-primary mb-3" role="status" style={{width: '3rem', height: '3rem'}}>
+          <div className="spinner-border text-primary mb-3" role="status" style={{ width: '3rem', height: '3rem' }}>
             <span className="visually-hidden">Loading...</span>
           </div>
           <h5>Loading Hebrew AI Platform...</h5>
@@ -78,27 +76,18 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Route rendering
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'login':
-      case 'register':
-        return <AuthPage />;
-      case 'study':
-        return <StudyPageWrapper />;
-      case 'profile':
-        return <ProfilePageWrapper />;
-      case 'home':
-      default:
-        return <HomePage />;
-    }
-  };
-
   return (
     <>
       <Navbar />
       <main>
-        {renderPage()}
+        <Routes>
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/register" element={<AuthPage />} />
+          <Route path="/study" element={<StudyPageWrapper />} />
+          <Route path="/profile" element={<ProfilePageWrapper />} />
+          <Route path="/" element={isAuthenticated ? <HomePage /> : <Navigate to="/login" />} />
+          <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} />} />
+        </Routes>
       </main>
     </>
   );
@@ -111,14 +100,14 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    window.location.hash = '#home';
+    window.location.href = '/'; // Use router navigation
   };
 
   return (
     <>
       <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
         <div className="container">
-          <a className="navbar-brand fw-bold" href="#home">
+          <a className="navbar-brand fw-bold" href="/">
             🎯 Hebrew AI Platform
           </a>
           
@@ -134,13 +123,13 @@ const Navbar: React.FC = () => {
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav me-auto">
               <li className="nav-item">
-                <a className="nav-link" href="#home">
+                <a className="nav-link" href="/">
                   <i className="bi bi-house-fill me-1"></i>Home
                 </a>
               </li>
               {isAuthenticated && (
                 <li className="nav-item">
-                  <a className="nav-link" href="#study">
+                  <a className="nav-link" href="/study">
                     <i className="bi bi-book me-1"></i>Study
                   </a>
                 </li>
@@ -182,12 +171,12 @@ const Navbar: React.FC = () => {
               ) : (
                 <>
                   <li className="nav-item">
-                    <a className="nav-link" href="#login">
+                    <a className="nav-link" href="/login">
                       <i className="bi bi-box-arrow-in-right me-1"></i>Login
                     </a>
                   </li>
                   <li className="nav-item">
-                    <a className="nav-link" href="#register">
+                    <a className="nav-link" href="/register">
                       <i className="bi bi-person-plus me-1"></i>Register
                     </a>
                   </li>
@@ -255,11 +244,11 @@ const HomePage: React.FC = () => {
               </div>
               
               <div className="d-grid gap-2 d-md-block">
-                <a href="#study" className="btn btn-primary btn-lg me-md-2">
+                <a href="/study" className="btn btn-primary btn-lg me-md-2">
                   <i className="bi bi-play-fill me-2"></i>
                   Continue Learning
                 </a>
-                <a href="#profile" className="btn btn-outline-primary btn-lg">
+                <a href="/profile" className="btn btn-outline-primary btn-lg">
                   <i className="bi bi-person me-2"></i>
                   View Profile
                 </a>
@@ -283,7 +272,7 @@ const PublicHomePage: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [analyzing, setAnalyzing] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-  const { user } = useAuth(); // Destructure user from useAuth hook
+  const { analyzeWord } = useAuth(); // Destructure analyzeWord from useAuth hook
 
   useEffect(() => {
     checkSystemHealth();
@@ -291,7 +280,7 @@ const PublicHomePage: React.FC = () => {
 
   const checkSystemHealth = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/health');
+      const response = await fetch('http://localhost:8000/health');
       const data = await response.json();
       setHealthStatus(data);
     } catch (error) {
@@ -307,7 +296,7 @@ const PublicHomePage: React.FC = () => {
     }
   };
 
-  const analyzeWord = async () => {
+  const handleAnalyze = async () => {
     if (!inputWord.trim()) {
       setError('Please enter a Hebrew word');
       return;
@@ -317,17 +306,7 @@ const PublicHomePage: React.FC = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:8000/api/analyze-word', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ word: inputWord.trim() }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Analysis failed');
-      }
-
-      const result = await response.json();
+      const result = await analyzeWord(inputWord.trim());
       setAnalysisResult(result);
     } catch (error) {
       setError('Analysis failed. Please try again.');
@@ -421,7 +400,7 @@ const PublicHomePage: React.FC = () => {
                   type="text"
                   value={inputWord}
                   onChange={(e) => setInputWord(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && analyzeWord()}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAnalyze()}
                   className="form-control"
                   placeholder="Enter Hebrew word (e.g., בראשית)"
                   style={{ direction: 'rtl', textAlign: 'right' }}
@@ -430,7 +409,7 @@ const PublicHomePage: React.FC = () => {
 
               <div className="d-grid gap-2 mb-3">
                 <button
-                  onClick={analyzeWord}
+                  onClick={handleAnalyze}
                   disabled={analyzing || !inputWord.trim()}
                   className="btn btn-primary"
                 >
@@ -565,11 +544,11 @@ const PublicHomePage: React.FC = () => {
       {/* Call to Action */}
       <div className="text-center">
         <div className="d-grid gap-2 d-md-block mb-4">
-          <a href="#register" className="btn btn-primary btn-lg me-md-2">
+          <a href="/register" className="btn btn-primary btn-lg me-md-2">
             <i className="bi bi-person-plus me-2"></i>
             Start Learning
           </a>
-          <a href="#login" className="btn btn-outline-primary btn-lg">
+          <a href="/login" className="btn btn-outline-primary btn-lg">
             <i className="bi bi-box-arrow-in-right me-2"></i>
             Login
           </a>
@@ -627,10 +606,12 @@ const StudyPage: React.FC = () => {
   const loadBooks = async () => {
     try {
       const response = await getBooks();
-      setBooks(response.books || []);
-      if (response.books && response.books.length > 0) {
-        setSelectedBook(response.books[0].id);
-      }
+      const bookList: Book[] = (response.books || []).map((bookId: string) => ({
+        id: bookId,
+        name: bookId, // Adjust if you have hebrew_name data
+      }));
+      setBooks(bookList);
+      if (bookList.length > 0) setSelectedBook(bookList[0].id);
     } catch (error) {
       console.error('Failed to load books:', error);
       setError('Failed to load Hebrew books');
@@ -655,7 +636,7 @@ const StudyPage: React.FC = () => {
       const studyMinutes = Math.floor((new Date().getTime() - sessionStartTime.getTime()) / 60000);
       const wordsAnalyzed = analysisResult ? inputText.split(' ').length : 0;
       
-      await endStudySession(studyMinutes, wordsAnalyzed);
+      await endStudySession({ sessionId: 1, wordsReviewed: studyMinutes, versesStudied: wordsAnalyzed });
       setStudySessionActive(false);
       setSessionStartTime(null);
       setError('');
@@ -821,7 +802,7 @@ const StudyPage: React.FC = () => {
                   >
                     {books.map((book) => (
                       <option key={book.id} value={book.id}>
-                        {book.name} ({book.hebrew_name})
+                        {book.name} ({book.hebrew_name || book.id})
                       </option>
                     ))}
                   </select>
@@ -929,7 +910,7 @@ const ProfilePageWrapper = withAuth(() => {
   const [showProfile, setShowProfile] = useState<boolean>(true);
   
   return showProfile ? (
-    <UserProfile onClose={() => window.location.hash = '#home'} />
+    <UserProfile onClose={() => window.location.href = '/home'} />
   ) : (
     <div>Loading...</div>
   );

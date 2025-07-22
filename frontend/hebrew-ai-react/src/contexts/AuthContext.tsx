@@ -1,22 +1,53 @@
-// src/contexts/AuthContext.jsx - Authentication Context for React
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// src/contexts/AuthContext.tsx - Authentication Context for React
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+// Define types
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  learning_level: string;
+  total_study_time?: number;
+  words_learned?: number;
+}
+
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  isAuthenticated: boolean;
+  token: string | null;
+  register: (userData: { username: string; email: string; password: string; learning_level?: string }) => Promise<{ success: boolean; user?: User; error?: string }>;
+  login: (credentials: { username: string; password: string }) => Promise<{ success: boolean; user?: User; error?: string }>;
+  logout: () => void;
+  verifyToken: () => Promise<void>;
+  getUserProfile: () => Promise<User | null>;
+  updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (passwordData: { currentPassword: string; newPassword: string }) => Promise<{ success: boolean; error?: string }>;
+  getUserStats: () => Promise<User | null>;
+  analyzeText: (text: string) => Promise<any>;
+  analyzeWord: (word: string) => Promise<any>;
+  getBooks: () => Promise<{ books: string[]; user_authenticated: boolean; total_books: number }>;
+  startStudySession: (book: string, chapter: number) => Promise<any>;
+  endStudySession: (sessionData: { sessionId: number; wordsReviewed: number; versesStudied: number }) => Promise<any>;
+  getStudyProgress: () => Promise<User | null>;
+  apiCall: (endpoint: string, options?: RequestInit) => Promise<any>;
+}
 
 // Create Authentication Context
-const AuthContext = createContext({});
+const AuthContext = createContext<AuthContextType | null>(null);
 
 // API Base URL
 const API_BASE = 'http://localhost:8000';
 
 // Authentication Provider Component
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(localStorage.getItem('auth_token'));
+  const [token, setToken] = useState<string | null>(localStorage.getItem('auth_token'));
 
   // Set up axios defaults if token exists
   useEffect(() => {
     if (token) {
-      // Verify token on app start
       verifyToken();
     } else {
       setLoading(false);
@@ -24,11 +55,11 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   // API call helper with automatic token handling
-  const apiCall = async (endpoint, options = {}) => {
+  const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     const url = `${API_BASE}${endpoint}`;
     const headers = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as { [key: string]: string }),
     };
 
     if (token) {
@@ -43,7 +74,6 @@ export const AuthProvider = ({ children }) => {
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Token expired or invalid
           logout();
           throw new Error('Authentication required');
         }
@@ -58,7 +88,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Register new user
-  const register = async (userData) => {
+  const register = async (userData: { username: string; email: string; password: string; learning_level?: string }) => {
     try {
       setLoading(true);
       const response = await apiCall('/auth/register', {
@@ -70,21 +100,21 @@ export const AuthProvider = ({ children }) => {
         const newToken = response.access_token;
         setToken(newToken);
         localStorage.setItem('auth_token', newToken);
-        setUser(response.user_info);
-        return { success: true, user: response.user_info };
+        setUser(response.user);
+        return { success: true, user: response.user };
       }
       
       return { success: false, error: 'Registration failed' };
     } catch (error) {
       console.error('Registration error:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     } finally {
       setLoading(false);
     }
   };
 
   // Login existing user
-  const login = async (credentials) => {
+  const login = async (credentials: { username: string; password: string }) => {
     try {
       setLoading(true);
       const response = await apiCall('/auth/login', {
@@ -96,14 +126,14 @@ export const AuthProvider = ({ children }) => {
         const newToken = response.access_token;
         setToken(newToken);
         localStorage.setItem('auth_token', newToken);
-        setUser(response.user_info);
-        return { success: true, user: response.user_info };
+        setUser(response.user);
+        return { success: true, user: response.user };
       }
       
       return { success: false, error: 'Login failed' };
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: error.message || 'Login failed' };
+      return { success: false, error: (error as Error).message || 'Login failed' };
     } finally {
       setLoading(false);
     }
@@ -119,11 +149,9 @@ export const AuthProvider = ({ children }) => {
   // Verify token validity
   const verifyToken = async () => {
     try {
-      const response = await apiCall('/auth/verify-token');
-      if (response.valid) {
-        // Get full user profile
-        const profile = await getUserProfile();
-        setUser(profile);
+      const response = await apiCall('/auth/profile');
+      if (response) {
+        setUser(response);
       } else {
         logout();
       }
@@ -148,24 +176,22 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Update user profile
-  const updateProfile = async (updates) => {
+  const updateProfile = async (updates: Partial<User>) => {
     try {
       await apiCall('/auth/profile', {
         method: 'PUT',
         body: JSON.stringify(updates),
       });
-      
-      // Refresh user profile
       await getUserProfile();
       return { success: true };
     } catch (error) {
       console.error('Profile update failed:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   };
 
   // Change password
-  const changePassword = async (passwordData) => {
+  const changePassword = async (passwordData: { currentPassword: string; newPassword: string }) => {
     try {
       await apiCall('/auth/change-password', {
         method: 'POST',
@@ -174,26 +200,26 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error('Password change failed:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   };
 
   // Get user statistics
   const getUserStats = async () => {
     try {
-      return await apiCall('/auth/stats');
+      return await apiCall('/auth/profile');
     } catch (error) {
       console.error('Failed to get user stats:', error);
       return null;
     }
   };
 
-  // Protected API call for Hebrew analysis
-  const analyzeText = async (text) => {
+  // Analyze text
+  const analyzeText = async (text: string) => {
     try {
-      return await apiCall('/analyze/text', {
+      return await apiCall('/api/analyze', {
         method: 'POST',
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, analysis_type: "comprehensive" }),
       });
     } catch (error) {
       console.error('Text analysis failed:', error);
@@ -201,10 +227,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Protected API call for word analysis
-  const analyzeWord = async (word) => {
+  // Analyze word
+  const analyzeWord = async (word: string) => {
     try {
-      return await apiCall('/analyze/word', {
+      return await apiCall('/api/analyze-word', {
         method: 'POST',
         body: JSON.stringify({ word }),
       });
@@ -217,7 +243,7 @@ export const AuthProvider = ({ children }) => {
   // Get Hebrew books
   const getBooks = async () => {
     try {
-      return await apiCall('/books');
+      return await apiCall('/api/books');
     } catch (error) {
       console.error('Failed to get books:', error);
       throw error;
@@ -225,9 +251,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Start study session
-  const startStudySession = async (book, chapter) => {
+  const startStudySession = async (book: string, chapter: number) => {
     try {
-      return await apiCall('/study/session/start', {
+      return await apiCall('/auth/start-session', {
         method: 'POST',
         body: JSON.stringify({ book, chapter }),
       });
@@ -238,13 +264,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   // End study session
-  const endStudySession = async (minutes, wordsReviewed) => {
+  const endStudySession = async (sessionData: { sessionId: number; wordsReviewed: number; versesStudied: number }) => {
     try {
-      return await apiCall('/study/session/end', {
+      return await apiCall('/auth/end-session', {
         method: 'POST',
-        body: JSON.stringify({ 
-          minutes: minutes,
-          words_reviewed: wordsReviewed 
+        body: JSON.stringify({
+          session_id: sessionData.sessionId,
+          words_reviewed: sessionData.wordsReviewed,
+          verses_studied: sessionData.versesStudied,
         }),
       });
     } catch (error) {
@@ -256,43 +283,32 @@ export const AuthProvider = ({ children }) => {
   // Get study progress
   const getStudyProgress = async () => {
     try {
-      return await apiCall('/study/progress');
+      return await apiCall('/auth/profile');
     } catch (error) {
       console.error('Failed to get study progress:', error);
       throw error;
     }
   };
 
-  const value = {
-    // State
+  const value: AuthContextType = {
     user,
     loading,
     isAuthenticated: !!user,
     token,
-
-    // Authentication methods
     register,
     login,
     logout,
     verifyToken,
-
-    // Profile methods
     getUserProfile,
     updateProfile,
     changePassword,
     getUserStats,
-
-    // Hebrew AI methods
     analyzeText,
     analyzeWord,
     getBooks,
-
-    // Study session methods
     startStudySession,
     endStudySession,
     getStudyProgress,
-
-    // Utility
     apiCall,
   };
 
@@ -313,13 +329,13 @@ export const useAuth = () => {
 };
 
 // Higher-order component for protected routes
-export const withAuth = (Component) => {
-  return function AuthenticatedComponent(props) {
+export const withAuth = (Component: React.ComponentType<any>) => {
+  return function AuthenticatedComponent(props: any) {
     const { isAuthenticated, loading } = useAuth();
 
     if (loading) {
       return (
-        <div className="d-flex justify-content-center align-items-center" style={{minHeight: '200px'}}>
+        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
           <div className="spinner-border text-primary" role="status">
             <span className="visually-hidden">Loading...</span>
           </div>
